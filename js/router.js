@@ -16,6 +16,7 @@ export function initRouter() {
         route = "dashboard";
     }
 
+    // Ryd containeren før ny visning indlæses
     appContainer.innerHTML = "";
 
     switch (route) {
