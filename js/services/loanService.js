@@ -4,22 +4,19 @@ import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "firebase
 const LOAN_COLL = "loans";
 const ASSET_COLL = "assets";
 
-// --- LÅN LOGIK ---
 export async function addLoan(loanData) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const { isGhost, ...saveData } = loanData; 
-        const docRef = await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL), saveData);
+        const docRef = await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL), loanData);
         return docRef.id;
-    } catch (e) { console.error("Fejl ved oprettelse af lån:", e); }
+    } catch (e) { console.error(e); }
 }
 
 export async function updateLoan(id, loanData) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const { isGhost, ...saveData } = loanData;
-        await updateDoc(doc(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL, id), saveData);
-    } catch (e) { console.error("Fejl ved opdatering af lån:", e); }
+        await updateDoc(doc(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL, id), loanData);
+    } catch (e) { console.error(e); }
 }
 
 export async function getLoans() {
@@ -34,16 +31,15 @@ export async function deleteLoan(id) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         await deleteDoc(doc(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL, id));
-    } catch (e) { console.error("Fejl ved sletning af lån:", e); }
+    } catch (e) { console.error(e); }
 }
 
-// --- AKTIV LOGIK (Til Bil, Hus etc.) ---
 export async function addAsset(assetData) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const docRef = await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL), assetData);
         return docRef.id;
-    } catch (e) { console.error("Fejl ved oprettelse af aktiv:", e); }
+    } catch (e) { console.error(e); }
 }
 
 export async function getAssets() {
@@ -58,20 +54,17 @@ export async function deleteAsset(id) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         await deleteDoc(doc(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL, id));
-    } catch (e) { console.error("Fejl ved sletning af aktiv:", e); }
+    } catch (e) { console.error(e); }
 }
 
-// --- BEREGNINGER FOR SIMULATOR ---
 export function calculateLoanForMonth(loan, targetMonthStr) {
     const start = new Date(loan.startDate + "-01");
     const target = new Date(targetMonthStr + "-01");
     if (target < start) return { interest: 0, principalPaid: 0, remainingBalance: loan.principal };
-    
     const monthsDiff = (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth());
     const monthlyRate = (loan.interestRate / 100) / 12;
     let balance = loan.principal;
     let interest = 0, principalPaid = 0;
-    
     for (let i = 0; i <= monthsDiff; i++) {
         interest = balance * monthlyRate;
         if (balance + interest <= loan.monthlyPayment) {
