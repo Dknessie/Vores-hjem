@@ -38,26 +38,19 @@ button { cursor: pointer; font-family: inherit; border: none; outline: none; tra
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; }
+.logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
 .nav-links { list-style: none; display: flex; gap: 2rem; }
 .nav-links li { font-weight: 500; opacity: 0.8; cursor: pointer; }
 .nav-links li:hover { opacity: 1; transform: translateY(-1px); }
 
-/* --- LAYOUT CONTAINER --- */
-#app { max-width: 1100px; margin: 3rem auto; padding: 0 1.5rem; }
-
-/* --- DASHBOARD (LANDING PAGE) --- */
+/* --- DASHBOARD --- */
 .dashboard-header {
     margin-bottom: 3rem;
     border-left: 6px solid var(--accent-blue);
     padding-left: 1.5rem;
 }
-
-.dashboard-header h1 { font-size: 2.2rem; margin-bottom: 0.2rem; }
-.dashboard-header p { color: var(--text-light); font-size: 1.1rem; }
 
 .grid-container {
     display: grid;
@@ -76,29 +69,11 @@ button { cursor: pointer; font-family: inherit; border: none; outline: none; tra
     border: 1px solid rgba(0,0,0,0.02);
 }
 
-.card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-    border-color: var(--accent-blue);
-}
-
+.card:hover { transform: translateY(-10px); border-color: var(--accent-blue); }
 .card-icon { font-size: 3rem; margin-bottom: 1.2rem; display: block; }
-.card h3 { font-size: 1.4rem; color: var(--wood-brown); margin-bottom: 0.5rem; }
-.card p { color: var(--text-light); font-size: 0.95rem; margin-bottom: 1.5rem; }
-.action-text { color: var(--primary-green); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* --- SHARED ELEMENTS --- */
+/* --- BUDGET & FORMUE --- */
 .view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem; }
-
-.btn-outline {
-    background: transparent;
-    border: 2px solid var(--primary-green);
-    color: var(--primary-green);
-    padding: 0.7rem 1.4rem;
-    border-radius: 50px;
-    font-weight: 600;
-}
-.btn-outline:hover { background: var(--primary-green); color: white; }
 
 .month-selector {
     display: flex;
@@ -109,6 +84,7 @@ button { cursor: pointer; font-family: inherit; border: none; outline: none; tra
     box-shadow: var(--shadow);
     gap: 1rem;
 }
+
 .btn-icon {
     background: var(--bg-color);
     width: 44px;
@@ -119,95 +95,45 @@ button { cursor: pointer; font-family: inherit; border: none; outline: none; tra
     align-items: center;
     color: var(--wood-brown);
 }
-.btn-icon:hover { background: var(--accent-blue); color: white; transform: scale(1.05); }
-.month-label { min-width: 180px; text-align: center; font-weight: 700; font-size: 1.1rem; text-transform: capitalize; }
 
-/* --- DEBT DASHBOARD (S-Profilen) --- */
-.debt-dashboard { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem; align-items: start; }
-
-.main-debt-card {
-    background: var(--accent-blue);
-    color: white;
-    padding: 2.5rem;
-    border-radius: var(--border-radius);
-    transition: var(--transition);
-    box-shadow: 0 15px 35px rgba(74, 102, 122, 0.2);
-}
-.main-debt-card.focused { border: 4px solid var(--primary-green); box-shadow: 0 0 25px rgba(62, 92, 74, 0.4); }
-.main-debt-card label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; }
-.debt-value { font-size: 3.5rem; font-weight: 800; margin: 0.5rem 0; letter-spacing: -1px; }
-.debt-date { font-size: 1rem; opacity: 0.9; }
-
-.btn-small-white { background: rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; margin-top: 10px; }
-.btn-small-white:hover { background: rgba(255,255,255,0.4); }
-
-.debt-stats-grid { display: flex; flex-direction: column; gap: 1rem; }
-.mini-stat { background: white; padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); }
-.mini-stat label { display: block; font-size: 0.8rem; color: var(--text-light); text-transform: uppercase; font-weight: 700; margin-bottom: 0.4rem; }
-.mini-stat .val { font-size: 1.5rem; font-weight: 800; }
-.val.positive { color: var(--success-green); }
-.val.negative { color: var(--danger-red); }
-
-/* --- ASSET CARDS --- */
-.loan-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
-.loan-summary-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 18px;
-    box-shadow: var(--shadow);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    border: 2px solid transparent;
-}
-.loan-summary-card:hover { transform: translateY(-5px); border-color: var(--accent-blue); }
-.loan-summary-card.active { border-color: var(--primary-green); background: #fdfdfa; }
-
-/* --- BUDGET SECTION --- */
-.budget-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.2rem; margin-bottom: 2.5rem; }
-.stat-card { background: white; padding: 1.8rem; border-radius: var(--border-radius); box-shadow: var(--shadow); text-align: center; }
-.stat-card label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); margin-bottom: 0.5rem; }
-.stat-card div { font-size: 1.6rem; font-weight: 800; color: var(--wood-brown); }
-.stat-card.assets div { color: var(--primary-green); }
+.btn-icon:hover { background: var(--accent-blue); color: white; }
 
 .tab-control { display: flex; background: #e9e8e0; padding: 0.4rem; border-radius: 50px; margin-bottom: 2.5rem; }
-.tab-btn { flex: 1; padding: 1rem; border-radius: 50px; font-weight: 600; color: var(--text-light); background: transparent; }
+.tab-btn { flex: 1; padding: 1rem; border-radius: 50px; font-weight: 600; color: var(--text-light); }
 .tab-btn.active { background: white; color: var(--primary-green); box-shadow: var(--shadow); }
 
+.stat-card { background: white; padding: 1.8rem; border-radius: var(--border-radius); box-shadow: var(--shadow); text-align: center; }
+.stat-card div { font-size: 1.6rem; font-weight: 800; color: var(--wood-brown); }
+.stat-card.income div { color: var(--success-green); }
+.stat-card.expenses div { color: var(--danger-red); }
+.stat-card.assets div { color: var(--primary-green); }
+
+/* --- BUDGET LIST ITEMS --- */
 .budget-list-section { background: white; padding: 2.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); }
 .budget-item { display: flex; justify-content: space-between; padding: 1.2rem 0; border-bottom: 1px solid #f0f0f0; align-items: center; }
+.auto-badge { background: #f0f7ff; color: var(--accent-blue); padding: 2px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+.item-val { font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 1rem; }
+.item-val.income { color: var(--success-green); }
+.item-val.expense { color: var(--danger-red); }
+.item-val.asset { color: var(--primary-green); }
 
-.btn-add {
-    background: var(--primary-green);
-    color: white;
-    padding: 0.8rem 1.6rem;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 0.95rem;
-}
+/* --- ASSET/LOAN DASHBOARD --- */
+.debt-dashboard { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem; }
+.main-debt-card { background: var(--accent-blue); color: white; padding: 2.5rem; border-radius: var(--border-radius); box-shadow: 0 15px 35px rgba(74, 102, 122, 0.2); }
+.main-debt-card.focused { border: 4px solid var(--primary-green); }
+.debt-value { font-size: 3.5rem; font-weight: 800; margin: 0.5rem 0; }
+.mini-stat { background: white; padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); }
+.mini-stat .val { font-size: 1.5rem; font-weight: 800; }
+
+/* --- BUTTONS & MODALS --- */
+.btn-add, .btn-submit { background: var(--primary-green); color: white; padding: 0.8rem 1.6rem; border-radius: 12px; font-weight: 700; box-shadow: 0 4px 10px rgba(62, 92, 74, 0.2); }
+.btn-outline { background: transparent; border: 2px solid var(--primary-green); color: var(--primary-green); padding: 0.7rem 1.4rem; border-radius: 50px; font-weight: 600; }
+.btn-outline:hover { background: var(--primary-green); color: white; }
+.btn-edit-minimal, .btn-del-minimal { background: transparent; color: #ccc; font-size: 1.2rem; margin-left: 10px; }
+.btn-edit-minimal:hover { color: var(--accent-blue); }
+.btn-del-minimal:hover { color: var(--danger-red); }
 
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(3px); }
 .modal-card { background: white; padding: 3rem 2.5rem; border-radius: 24px; width: 90%; max-width: 480px; }
-
-.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
 .input-group { margin-bottom: 1.5rem; }
-.input-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--wood-brown); }
-.input-group input, .input-group select { 
-    width: 100%; 
-    padding: 1rem; 
-    border-radius: 12px; 
-    border: 2px solid #f0f0f0; 
-    background: #fafafa;
-    font-size: 1rem;
-}
-
-.btn-submit { background: var(--primary-green); color: white; padding: 1.1rem; border-radius: 12px; width: 100%; font-weight: 700; font-size: 1.1rem; margin-top: 1rem; }
-.btn-del-minimal { background: transparent; color: #ddd; font-size: 1.3rem; padding: 0 5px; }
-.btn-del-minimal:hover { color: var(--danger-red); }
-
-/* --- RESPONSIVITET --- */
-@media (max-width: 900px) {
-    .debt-dashboard { grid-template-columns: 1fr; }
-    .debt-value { font-size: 2.8rem; }
-}
+.input-group input, .input-group select { width: 100%; padding: 1rem; border: 2px solid #f0f0f0; border-radius: 12px; background: #fafafa; }
