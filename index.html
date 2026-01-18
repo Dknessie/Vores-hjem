@@ -8,21 +8,24 @@
 </head>
 <body>
 
+    <!-- Navigation -->
     <nav id="main-nav">
-        <div class="logo" data-link="./">Vores Hjem</div>
+        <div class="logo" data-link="dashboard">Vores Hjem</div>
         <ul class="nav-links">
-            <li data-link="./">Dashboard</li>
+            <li data-link="dashboard">Dashboard</li>
+            <li data-link="budget">Budget</li>
+            <li data-link="formue">Formue & Gæld</li>
             <li data-link="opskrifter">Opskrifter</li>
             <li data-link="lager">Lager</li>
-            <li data-link="projekter">Projekter</li>
-            <li data-link="budget">Budget</li>
         </ul>
     </nav>
 
+    <!-- Hovedcontainer -->
     <main id="app">
-        <div id="loader">Henter data...</div>
+        <div id="loader">Henter dit hjem...</div>
     </main>
 
+    <!-- Firebase SDK Moduler -->
     <script type="importmap">
         {
           "imports": {
