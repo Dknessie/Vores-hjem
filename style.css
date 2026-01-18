@@ -7,11 +7,11 @@
     --wood-brown: #5d4a44;        /* Varm brun (Møblerne) */
     --text-main: #2e2e2e;         /* Næsten sort til læsbarhed */
     --text-light: #767676;        /* Grålig tekst til detaljer */
-    --success-green: #2d6a4f;     /* Frisk grøn til indtægter/friværdi */
-    --danger-red: #bc6c25;        /* Varm brændt orange/rød til udgifter */
-    --shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-    --border-radius: 16px;
-    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --success-green: #2d6a4f;     /* Frisk grøn til afdrag/vækst */
+    --danger-red: #bc6c25;        /* Varm brændt orange til renter/spild */
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    --border-radius: 20px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* --- GENEREL STYLING --- */
@@ -26,11 +26,12 @@ body {
     background-color: var(--bg-color);
     color: var(--text-main);
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3 {
     color: var(--wood-brown);
-    margin-bottom: 1rem;
+    font-weight: 700;
 }
 
 button {
@@ -52,13 +53,12 @@ button {
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
 .logo {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: 800;
-    cursor: pointer;
     letter-spacing: -0.5px;
 }
 
@@ -69,268 +69,280 @@ button {
 }
 
 .nav-links li {
-    cursor: pointer;
     font-weight: 500;
-    opacity: 0.85;
+    opacity: 0.8;
+    transition: var(--transition);
 }
 
 .nav-links li:hover {
     opacity: 1;
-    text-decoration: underline;
-    text-underline-offset: 5px;
+    transform: translateY(-1px);
 }
 
-/* --- LAYOUT CONTAINER --- */
+/* --- LAYOUT --- */
 #app {
-    max-width: 1000px;
-    margin: 2.5rem auto;
+    max-width: 1100px;
+    margin: 3rem auto;
     padding: 0 1.5rem;
 }
 
-/* --- DASHBOARD (LANDING PAGE) --- */
-.dashboard-header {
-    margin-bottom: 3rem;
-    text-align: left;
-    border-left: 6px solid var(--accent-blue);
-    padding-left: 1.5rem;
-}
-
-.dashboard-header h1 {
-    font-size: 2.2rem;
-    margin-bottom: 0.2rem;
-}
-
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
-}
-
-.card {
-    background: var(--card-bg);
-    padding: 2.5rem 1.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    text-align: center;
-    transition: var(--transition);
-    cursor: pointer;
-    border: 1px solid rgba(0,0,0,0.02);
-}
-
-.card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
-    border-color: var(--accent-blue);
-}
-
-.card-icon {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    display: block;
-}
-
-.card h3 {
-    font-size: 1.3rem;
-    color: var(--wood-brown);
-}
-
-.card p {
-    color: var(--text-light);
-    font-size: 0.95rem;
-    margin-bottom: 1.5rem;
-}
-
-.action-text {
-    color: var(--primary-green);
-    font-weight: 700;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-}
-
-/* --- BUDGET & FORMUE FÆLLES --- */
 .view-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
 }
 
+.view-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.view-header p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+}
+
+/* --- MÅNEDS SELECTOR (De bløde pile) --- */
 .month-selector {
     display: flex;
     align-items: center;
     background: white;
-    padding: 0.6rem 1rem;
+    padding: 0.5rem;
     border-radius: 50px;
     box-shadow: var(--shadow);
+    gap: 1rem;
 }
 
 .month-label {
-    min-width: 180px;
+    min-width: 200px;
     text-align: center;
     font-weight: 700;
     color: var(--wood-brown);
-    text-transform: capitalize;
+    font-size: 1.1rem;
 }
 
-.tab-control {
+.btn-icon {
+    background: var(--bg-color);
+    color: var(--wood-brown);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
     display: flex;
-    background: #e9e8e0;
-    padding: 0.4rem;
-    border-radius: 14px;
-    margin-bottom: 2rem;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.tab-btn {
-    flex: 1;
-    padding: 0.9rem;
-    border-radius: 10px;
-    background: transparent;
-    font-weight: 600;
-    color: var(--text-light);
+.btn-icon:hover {
+    background: var(--accent-blue);
+    color: white;
+    transform: scale(1.05);
 }
 
-.tab-btn.active {
-    background: white;
-    color: var(--primary-green);
-    box-shadow: var(--shadow);
-}
-
-/* --- STATS & OVERVIEW --- */
-.budget-overview {
+/* --- DEBT DASHBOARD (S-Profilen) --- */
+.debt-dashboard {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1.2rem;
-    margin-bottom: 2.5rem;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
 }
 
-.stat-card {
+.main-debt-card {
+    background: var(--accent-blue);
+    color: white;
+    padding: 2.5rem;
+    border-radius: var(--border-radius);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(74, 102, 122, 0.2);
+}
+
+.main-debt-card label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.8;
+}
+
+.debt-value {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin: 0.5rem 0;
+    letter-spacing: -1px;
+}
+
+.debt-date {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.debt-stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mini-stat {
     background: white;
     padding: 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
-    text-align: center;
+    display: flex;
+    flex-direction: column;
 }
 
-.stat-card label {
-    display: block;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.mini-stat label {
+    font-size: 0.8rem;
     color: var(--text-light);
+    font-weight: 600;
     margin-bottom: 0.5rem;
 }
 
-.stat-card div {
+.mini-stat .val {
     font-size: 1.5rem;
     font-weight: 800;
-    color: var(--wood-brown);
 }
 
-.stat-card.income div { color: var(--success-green); }
-.stat-card.expenses div { color: var(--danger-red); }
+.val.positive { color: var(--success-green); }
+.val.negative { color: var(--danger-red); }
 
-/* --- FORMS & LISTS (FORMUE & GÆLD) --- */
+/* --- ASSET GRID & FORMS --- */
 .asset-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 2rem;
 }
 
 .asset-card-main {
     background: white;
-    padding: 2rem;
+    padding: 2.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
 }
 
+.asset-card-main h3 {
+    margin-bottom: 2rem;
+    font-size: 1.4rem;
+    border-bottom: 2px solid var(--bg-color);
+    padding-bottom: 0.5rem;
+}
+
 .input-group {
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.5rem;
 }
 
 .input-group label {
     display: block;
+    margin-bottom: 0.6rem;
     font-weight: 600;
-    margin-bottom: 0.4rem;
     font-size: 0.9rem;
+    color: var(--text-main);
 }
 
 .input-group input, .input-group select {
     width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    padding: 1rem;
+    border: 2px solid var(--bg-color);
+    border-radius: 12px;
     background: #fafafa;
+    font-size: 1rem;
+    transition: var(--transition);
 }
 
-.input-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+.input-group input:focus {
+    border-color: var(--accent-blue);
+    background: white;
 }
 
 .btn-submit {
     width: 100%;
     background: var(--primary-green);
     color: white;
-    padding: 1rem;
-    border-radius: 8px;
+    padding: 1.2rem;
+    border-radius: 12px;
     font-weight: 700;
+    font-size: 1rem;
     margin-top: 1rem;
+    box-shadow: 0 4px 10px rgba(62, 92, 74, 0.2);
 }
 
 .btn-submit:hover {
-    background: #2d4336;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(62, 92, 74, 0.3);
 }
 
-.list-item-asset {
+/* --- LOAN LIST --- */
+.loan-display-list {
+    list-style: none;
+}
+
+.loan-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 0;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 1.2rem;
+    background: var(--bg-color);
+    border-radius: 14px;
+    margin-bottom: 1rem;
+    transition: var(--transition);
 }
 
-.asset-info {
-    display: flex;
-    flex-direction: column;
+.loan-item:hover {
+    background: #f0efe9;
+    transform: translateX(5px);
 }
 
-.asset-info span {
+.loan-info strong {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--wood-brown);
+}
+
+.loan-info span {
     font-size: 0.85rem;
     color: var(--text-light);
 }
 
-/* --- BUDGET LISTE --- */
-.budget-list-section {
+.btn-del-small {
+    background: #fff;
+    color: var(--danger-red);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.btn-del-small:hover {
+    background: var(--danger-red);
+    color: white;
+}
+
+/* --- DASHBOARD CARDS (Genoprettet & Forbedret) --- */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 2rem;
+}
+
+.card {
     background: white;
-    padding: 2rem;
+    padding: 3rem 2rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
+    text-align: center;
+    border: 1px solid rgba(0,0,0,0.03);
 }
 
-.budget-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 1.2rem 0;
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.item-val.income { color: var(--success-green); }
-.item-val.expense { color: var(--danger-red); }
-.item-val.asset { color: var(--primary-green); }
-
-.btn-del {
-    background: #fff5f5;
-    color: #c0392b;
-    padding: 4px 8px;
-    border-radius: 4px;
-    margin-left: 10px;
+.card:hover {
+    transform: translateY(-10px);
+    border-color: var(--accent-blue);
 }
 
 /* --- RESPONSIVITET --- */
-@media (max-width: 768px) {
+@media (max-width: 850px) {
+    .debt-dashboard { grid-template-columns: 1fr; }
     .asset-grid { grid-template-columns: 1fr; }
-    #main-nav { flex-direction: column; gap: 1rem; }
-    .nav-links { gap: 1rem; font-size: 0.85rem; }
+    .debt-value { font-size: 2.5rem; }
 }
