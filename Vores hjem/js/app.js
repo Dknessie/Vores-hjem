@@ -6,7 +6,6 @@ import { initRouter } from "./router.js";
 
 /**
  * Global App State
- * Her gemmer vi data, der skal være tilgængelige på tværs af moduler
  */
 export const state = {
     user: null,
@@ -20,35 +19,34 @@ const app = initializeApp(firebaseConfig);
 state.db = getFirestore(app);
 state.auth = getAuth(app);
 
-/**
- * Start applikationen
- */
 function init() {
-    console.log("Applikation startet...");
+    console.log("Vores Hjem initialiseret...");
     
-    // Start routeren der håndterer visninger
+    // Start routeren
     initRouter();
     
-    // Håndtering af navigationstryk (Event Delegation)
+    // Event delegation til navigation
     document.addEventListener("click", e => {
-        if (e.target.matches("[data-link]")) {
+        const link = e.target.closest("[data-link]");
+        if (link) {
             e.preventDefault();
-            const route = e.target.getAttribute("data-link");
+            const route = link.getAttribute("data-link");
             navigateTo(route);
         }
     });
 }
 
 /**
- * Funktion til at skifte side uden reload
+ * Navigations-funktion der håndterer relative stier til GitHub Pages
  */
 export function navigateTo(url) {
-    history.pushState(null, null, url);
+    // Hvis vi er på GitHub Pages, skal vi bevare undermappen i URL'en
+    const path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+    
+    // Vi bruger hash-baseret routing som backup for at undgå 404 på GitHub
+    window.location.hash = url;
     initRouter();
 }
 
-// Vent på at DOM'en er klar
 document.addEventListener("DOMContentLoaded", init);
-
-// Håndtér "Back"-knappen i browseren
-window.addEventListener("popstate", initRouter);
+window.addEventListener("hashchange", initRouter);
