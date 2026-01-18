@@ -5,8 +5,7 @@ let selectedMonth = new Date().toISOString().slice(0, 7);
 let currentTab = 'total'; 
 let editingPostId = null;
 
-// Standard kategorier med budget-mål (kunne gemmes i databasen senere)
-// Dette giver dig overblikket over allokering vs. forbrug
+// Standard kategorier med budget-mål
 const categories = {
     bolig: { name: "Bolig", target: 12000 },
     bil: { name: "Bil & Transport", target: 5000 },
@@ -28,7 +27,7 @@ export async function renderBudget(container) {
 
         <div class="tab-control">
             <button class="tab-btn ${currentTab === 'total' ? 'active' : ''}" data-tab="total">Husstanden</button>
-            <button class="tab-btn ${currentTab === 'user1' ? 'active' : ''}" data-tab="user1">Mit Budget</button>
+            <button class="tab-btn ${currentTab === 'user1' ? 'active' : ''}" data-tab="user1">Mig</button>
             <button class="tab-btn ${currentTab === 'user2' ? 'active' : ''}" data-tab="user2">Kæresten</button>
         </div>
 
@@ -94,7 +93,6 @@ async function updateDisplay() {
     const loans = await getLoans();
     let inc = 0, exp = 0, princ = 0;
     
-    // Initialiser kategoridata for at beregne forbrug per kategori
     const catData = {};
     Object.keys(categories).forEach(k => catData[k] = { actual: 0, items: [] });
 
@@ -117,7 +115,6 @@ async function updateDisplay() {
         }
     });
 
-    // Tilføj lån-renter automatisk til kategorierne
     loans.forEach(l => {
         const isUser = currentTab !== 'total';
         if (isUser && l.owner !== currentTab && l.owner !== 'shared') return;
@@ -128,7 +125,6 @@ async function updateDisplay() {
             const a = c.principalPaid * m;
             exp += r; princ += a;
             
-            // Lån kategoriseres automatisk baseret på navn
             const cat = l.name.toLowerCase().includes('bil') ? 'bil' : 'bolig';
             if (catData[cat]) {
                 catData[cat].actual += r;
@@ -137,7 +133,6 @@ async function updateDisplay() {
         }
     });
 
-    // Render kategorier med status-barer
     container.innerHTML = Object.keys(categories).map(k => {
         const cat = categories[k];
         const data = catData[k];
@@ -166,7 +161,6 @@ async function updateDisplay() {
     document.getElementById('total-assets').innerText = Math.round(princ).toLocaleString() + ' kr.';
     document.getElementById('total-balance').innerText = Math.round(inc - exp - princ).toLocaleString() + ' kr.';
 
-    // Genaktiver edit knapper for manuelle poster
     container.querySelectorAll('[data-edit]').forEach(btn => {
         btn.onclick = () => {
             const item = posts.find(p => p.id === btn.dataset.edit);
@@ -184,28 +178,10 @@ async function updateDisplay() {
 }
 
 function setupEvents(container) {
-    document.getElementById('prev-month').onclick = () => { 
-        let d = new Date(selectedMonth+"-01"); 
-        d.setMonth(d.getMonth()-1); 
-        selectedMonth = d.toISOString().slice(0,7); 
-        renderBudget(container); 
-    };
-    document.getElementById('next-month').onclick = () => { 
-        let d = new Date(selectedMonth+"-01"); 
-        d.setMonth(d.getMonth()+1); 
-        selectedMonth = d.toISOString().slice(0,7); 
-        renderBudget(container); 
-    };
-    container.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { 
-        currentTab = b.dataset.tab; 
-        renderBudget(container); 
-    });
-    document.getElementById('open-modal-btn').onclick = () => { 
-        editingPostId = null; 
-        document.getElementById('budget-form').reset(); 
-        document.getElementById('modal-title').innerText = "Ny budgetpost"; 
-        document.getElementById('budget-modal').style.display = 'flex'; 
-    };
+    document.getElementById('prev-month').onclick = () => { let d = new Date(selectedMonth+"-01"); d.setMonth(d.getMonth()-1); selectedMonth = d.toISOString().slice(0,7); renderBudget(container); };
+    document.getElementById('next-month').onclick = () => { let d = new Date(selectedMonth+"-01"); d.setMonth(d.getMonth()+1); selectedMonth = d.toISOString().slice(0,7); renderBudget(container); };
+    container.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { currentTab = b.dataset.tab; renderBudget(container); });
+    document.getElementById('open-modal-btn').onclick = () => { editingPostId = null; document.getElementById('budget-form').reset(); document.getElementById('modal-title').innerText = "Ny budgetpost"; document.getElementById('budget-modal').style.display = 'flex'; };
     document.getElementById('cancel-btn').onclick = () => document.getElementById('budget-modal').style.display = 'none';
 
     document.getElementById('budget-form').onsubmit = async (e) => {
