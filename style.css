@@ -7,11 +7,11 @@
     --wood-brown: #5d4a44;        /* Varm brun (Møblerne) */
     --text-main: #2e2e2e;         /* Næsten sort til læsbarhed */
     --text-light: #767676;        /* Grålig tekst til detaljer */
-    --success-green: #2d6a4f;     /* En friskere grøn til indtægter */
-    --danger-red: #bc6c25;        /* Varm brændt orange/rød til udgifter/advarsler */
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    --border-radius: 12px;
-    --transition: all 0.3s ease;
+    --success-green: #2d6a4f;     /* Frisk grøn til indtægter/friværdi */
+    --danger-red: #bc6c25;        /* Varm brændt orange/rød til udgifter */
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    --border-radius: 16px;
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 /* --- GENEREL STYLING --- */
@@ -22,7 +22,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-main);
     line-height: 1.6;
@@ -38,114 +38,156 @@ button {
     font-family: inherit;
     border: none;
     outline: none;
+    transition: var(--transition);
 }
 
 /* --- NAVIGATION --- */
 #main-nav {
     background-color: var(--primary-green);
     color: white;
-    padding: 1rem 2rem;
+    padding: 1.2rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .logo {
-    font-size: 1.5rem;
-    font-weight: bold;
+    font-size: 1.6rem;
+    font-weight: 800;
     cursor: pointer;
+    letter-spacing: -0.5px;
 }
 
 .nav-links {
     list-style: none;
     display: flex;
-    gap: 1.5rem;
+    gap: 2rem;
 }
 
 .nav-links li {
     cursor: pointer;
-    opacity: 0.9;
-    transition: var(--transition);
+    font-weight: 500;
+    opacity: 0.85;
 }
 
 .nav-links li:hover {
     opacity: 1;
-    color: #e0e0e0;
+    text-decoration: underline;
+    text-underline-offset: 5px;
 }
 
-/* --- LAYOUT --- */
+/* --- LAYOUT CONTAINER --- */
 #app {
-    max-width: 900px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    max-width: 1000px;
+    margin: 2.5rem auto;
+    padding: 0 1.5rem;
 }
 
+/* --- DASHBOARD (LANDING PAGE) --- */
+.dashboard-header {
+    margin-bottom: 3rem;
+    text-align: left;
+    border-left: 6px solid var(--accent-blue);
+    padding-left: 1.5rem;
+}
+
+.dashboard-header h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.2rem;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 2.5rem 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+    border-color: var(--accent-blue);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.card h3 {
+    font-size: 1.3rem;
+    color: var(--wood-brown);
+}
+
+.card p {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+}
+
+.action-text {
+    color: var(--primary-green);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+/* --- BUDGET & FORMUE FÆLLES --- */
 .view-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
     flex-wrap: wrap;
-    gap: 1rem;
 }
 
-/* --- MÅNEDS SELECTOR --- */
 .month-selector {
     display: flex;
     align-items: center;
     background: white;
-    padding: 0.5rem;
-    border-radius: 30px;
+    padding: 0.6rem 1rem;
+    border-radius: 50px;
     box-shadow: var(--shadow);
 }
 
 .month-label {
-    min-width: 160px;
+    min-width: 180px;
     text-align: center;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--wood-brown);
     text-transform: capitalize;
 }
 
-.btn-icon {
-    background: var(--bg-color);
-    color: var(--wood-brown);
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: var(--transition);
-}
-
-.btn-icon:hover {
-    background: var(--accent-blue);
-    color: white;
-}
-
-/* --- TABS --- */
 .tab-control {
     display: flex;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
     background: #e9e8e0;
     padding: 0.4rem;
-    border-radius: 12px;
+    border-radius: 14px;
+    margin-bottom: 2rem;
 }
 
 .tab-btn {
     flex: 1;
-    padding: 0.8rem;
-    border-radius: 8px;
+    padding: 0.9rem;
+    border-radius: 10px;
     background: transparent;
-    color: var(--text-light);
     font-weight: 600;
-    transition: var(--transition);
+    color: var(--text-light);
 }
 
 .tab-btn.active {
@@ -154,12 +196,12 @@ button {
     box-shadow: var(--shadow);
 }
 
-/* --- BUDGET OVERVIEW (STAT CARDS) --- */
+/* --- STATS & OVERVIEW --- */
 .budget-overview {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2.5rem;
 }
 
 .stat-card {
@@ -172,114 +214,34 @@ button {
 
 .stat-card label {
     display: block;
-    font-size: 0.85rem;
-    color: var(--text-light);
-    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 1px;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
 }
 
 .stat-card div {
-    font-size: 1.4rem;
-    font-weight: bold;
+    font-size: 1.5rem;
+    font-weight: 800;
     color: var(--wood-brown);
 }
 
 .stat-card.income div { color: var(--success-green); }
 .stat-card.expenses div { color: var(--danger-red); }
 
-/* --- BUDGET LISTE --- */
-.budget-list-section {
-    background: white;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    padding: 1.5rem;
+/* --- FORMS & LISTS (FORMUE & GÆLD) --- */
+.asset-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
 }
 
-.section-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.btn-add {
-    background: var(--primary-green);
-    color: white;
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
-    font-weight: bold;
-}
-
-.budget-list {
-    list-style: none;
-}
-
-.budget-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-    border-bottom: 1px solid #eee;
-}
-
-.budget-item:last-child { border-bottom: none; }
-
-.item-main {
-    display: flex;
-    flex-direction: column;
-}
-
-.item-name {
-    font-weight: 600;
-    color: var(--wood-brown);
-}
-
-.item-owner {
-    font-size: 0.8rem;
-    color: var(--text-light);
-}
-
-.item-val {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-weight: bold;
-}
-
-.item-val.income { color: var(--success-green); }
-.item-val.expense { color: var(--danger-red); }
-
-.btn-del {
-    background: #fdf2f2;
-    color: #e63946;
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-}
-
-/* --- MODAL --- */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-}
-
-.modal-card {
+.asset-card-main {
     background: white;
     padding: 2rem;
     border-radius: var(--border-radius);
-    width: 90%;
-    max-width: 450px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow);
 }
 
 .input-group {
@@ -288,17 +250,17 @@ button {
 
 .input-group label {
     display: block;
+    font-weight: 600;
     margin-bottom: 0.4rem;
     font-size: 0.9rem;
-    font-weight: 600;
 }
 
 .input-group input, .input-group select {
     width: 100%;
     padding: 0.8rem;
-    border: 1px solid #ddd;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
-    font-size: 1rem;
+    background: #fafafa;
 }
 
 .input-row {
@@ -307,30 +269,68 @@ button {
     gap: 1rem;
 }
 
-.checkbox-group {
+.btn-submit {
+    width: 100%;
+    background: var(--primary-green);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 700;
+    margin-top: 1rem;
+}
+
+.btn-submit:hover {
+    background: #2d4336;
+}
+
+.list-item-asset {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
 }
 
-.modal-buttons {
+.asset-info {
     display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 1.5rem;
+    flex-direction: column;
 }
 
-.btn-text { background: transparent; color: var(--text-light); }
-.btn-submit { 
-    background: var(--primary-green); 
-    color: white; 
-    padding: 0.8rem 1.5rem; 
-    border-radius: 8px; 
+.asset-info span {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+/* --- BUDGET LISTE --- */
+.budget-list-section {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.budget-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.2rem 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.item-val.income { color: var(--success-green); }
+.item-val.expense { color: var(--danger-red); }
+.item-val.asset { color: var(--primary-green); }
+
+.btn-del {
+    background: #fff5f5;
+    color: #c0392b;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 10px;
 }
 
 /* --- RESPONSIVITET --- */
-@media (max-width: 600px) {
-    .view-header { flex-direction: column; text-align: center; }
-    .input-row { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+    .asset-grid { grid-template-columns: 1fr; }
+    #main-nav { flex-direction: column; gap: 1rem; }
+    .nav-links { gap: 1rem; font-size: 0.85rem; }
 }
