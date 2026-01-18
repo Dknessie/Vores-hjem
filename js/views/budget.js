@@ -2,7 +2,7 @@ import { getBudgetPosts, addBudgetPost, deleteBudgetPost } from "../services/bud
 import { getLoans, calculateLoanForMonth } from "../services/loanService.js";
 
 let selectedMonth = new Date().toISOString().slice(0, 7);
-let currentTab = 'total';
+let currentTab = 'total'; // 'total', 'user1', 'user2'
 
 export async function renderBudget(container) {
     container.innerHTML = `
@@ -52,7 +52,6 @@ export async function renderBudget(container) {
             <ul id="budget-items" class="budget-list"></ul>
         </section>
 
-        <!-- Modal -->
         <div id="budget-modal" class="modal-overlay" style="display:none;">
             <div class="modal-card">
                 <h2>Ny budgetpost</h2>
@@ -73,6 +72,14 @@ export async function renderBudget(container) {
                                 <option value="expense" selected>Udgift</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Hvem tilhører posten?</label>
+                        <select id="post-owner-select">
+                            <option value="user1">Mig</option>
+                            <option value="user2">Kæreste</option>
+                            <option value="shared">Fælles (deles 50/50)</option>
+                        </select>
                     </div>
                     <div class="checkbox-group">
                         <input type="checkbox" id="post-recurring" checked>
@@ -99,32 +106,52 @@ async function updateDisplay() {
     let inc = 0, exp = 0, princ = 0;
     listEl.innerHTML = "";
 
-    // 1. Manuelle poster
+    // 1. Manuelle poster med 50/50 split logik
     posts.forEach(post => {
         if (!isPostActive(post, selectedMonth)) return;
-        if (currentTab !== 'total' && post.owner !== currentTab) return;
+        
+        const isUserTab = currentTab !== 'total';
+        const isOwner = post.owner === currentTab;
+        const isShared = post.owner === 'shared';
 
-        if (post.type === 'income') inc += post.amount;
-        else exp += post.amount;
-        renderItem(listEl, post.title, post.amount, post.type, post.owner, post.id);
-    });
+        if (!isUserTab || isOwner || isShared) {
+            let multiplier = (isUserTab && isShared) ? 0.5 : 1.0;
+            let finalAmount = post.amount * multiplier;
 
-    // 2. Automatiske lån
-    loans.forEach(loan => {
-        if (currentTab !== 'total' && loan.owner !== currentTab && loan.owner !== 'shared') return;
-        const calc = calculateLoanForMonth(loan, selectedMonth);
-        if (calc) {
-            exp += calc.interest;
-            princ += calc.principalPaid;
-            renderItem(listEl, `${loan.name} (Rente)`, calc.interest, 'expense', loan.owner, null, true);
-            renderItem(listEl, `${loan.name} (Afdrag)`, calc.principalPaid, 'asset', loan.owner, null, true);
+            if (post.type === 'income') inc += finalAmount;
+            else exp += finalAmount;
+
+            renderItem(listEl, post.title + (isShared && isUserTab ? ' (50%)' : ''), finalAmount, post.type, post.owner, post.id);
         }
     });
 
-    document.getElementById('total-income').innerText = inc.toLocaleString() + ' kr.';
-    document.getElementById('total-expenses').innerText = exp.toLocaleString() + ' kr.';
-    document.getElementById('total-assets').innerText = princ.toLocaleString() + ' kr.';
-    document.getElementById('total-balance').innerText = (inc - exp - princ).toLocaleString() + ' kr.';
+    // 2. Automatiske lån med 50/50 split logik
+    loans.forEach(loan => {
+        const isUserTab = currentTab !== 'total';
+        const isOwner = loan.owner === currentTab;
+        const isShared = loan.owner === 'shared';
+
+        if (!isUserTab || isOwner || isShared) {
+            const calc = calculateLoanForMonth(loan, selectedMonth);
+            if (calc) {
+                let multiplier = (isUserTab && isShared) ? 0.5 : 1.0;
+                
+                let finalInterest = calc.interest * multiplier;
+                let finalPrincipal = calc.principalPaid * multiplier;
+
+                exp += finalInterest;
+                princ += finalPrincipal;
+
+                renderItem(listEl, `${loan.name} (Rente)${isShared && isUserTab ? ' (50%)' : ''}`, finalInterest, 'expense', loan.owner, null, true);
+                renderItem(listEl, `${loan.name} (Afdrag)${isShared && isUserTab ? ' (50%)' : ''}`, finalPrincipal, 'asset', loan.owner, null, true);
+            }
+        }
+    });
+
+    document.getElementById('total-income').innerText = Math.round(inc).toLocaleString() + ' kr.';
+    document.getElementById('total-expenses').innerText = Math.round(exp).toLocaleString() + ' kr.';
+    document.getElementById('total-assets').innerText = Math.round(princ).toLocaleString() + ' kr.';
+    document.getElementById('total-balance').innerText = Math.round(inc - exp - princ).toLocaleString() + ' kr.';
 }
 
 function renderItem(parent, title, amount, type, owner, id, isAuto = false) {
@@ -133,10 +160,10 @@ function renderItem(parent, title, amount, type, owner, id, isAuto = false) {
     li.innerHTML = `
         <div class="item-main">
             <span class="item-name">${title} ${isAuto ? '<span class="auto-badge">Auto</span>' : ''}</span>
-            <span class="item-owner">${owner === 'user1' ? 'Mig' : 'Kæreste'}</span>
+            <span class="item-owner">${owner === 'user1' ? 'Mig' : owner === 'user2' ? 'Kæreste' : 'Fælles'}</span>
         </div>
         <div class="item-val ${type}">
-            ${type === 'income' ? '+' : '-'}${amount.toLocaleString()} kr.
+            ${type === 'income' ? '+' : '-'}${Math.round(amount).toLocaleString()} kr.
             ${!isAuto ? `<button class="btn-del-minimal" onclick="deleteManualPost('${id}')">✕</button>` : ''}
         </div>
     `;
@@ -177,7 +204,7 @@ function setupEvents(container) {
             title: document.getElementById('post-title').value,
             amount: parseFloat(document.getElementById('post-amount').value),
             type: document.getElementById('post-type').value,
-            owner: currentTab === 'total' ? 'user1' : currentTab,
+            owner: document.getElementById('post-owner-select').value,
             startDate: selectedMonth,
             isRecurring: document.getElementById('post-recurring').checked
         });
