@@ -1,36 +1,42 @@
 import { renderDashboard } from "./views/dashboard.js";
 
 /**
- * Router-modul
- * Bestemmer hvilken kode der skal køre baseret på URL'en
+ * Router-modul - Nu optimeret til at bruge hash-routing for at undgå 404 fejl
  */
 export function initRouter() {
-    const path = window.location.pathname;
     const appContainer = document.querySelector("#app");
+    
+    // Hent ruten fra URL hash (f.eks. #opskrifter), fjern '#' og '/'
+    let route = window.location.hash.replace("#", "").replace("/", "");
+    
+    // Standard rute hvis tom
+    if (route === "" || route === "." || route === "./") {
+        route = "dashboard";
+    }
 
-    // Ryd containeren før vi tegner nyt indhold
+    // Ryd containeren
     appContainer.innerHTML = "";
 
-    // Simpel routing logik
-    switch (path) {
-        case "/":
-        case "/index.html":
+    // Routing logik
+    switch (route) {
+        case "dashboard":
             renderDashboard(appContainer);
             break;
-        case "/opskrifter":
-            appContainer.innerHTML = "<h1>Opskrifter</h1><p>Kommer snart...</p>";
+        case "opskrifter":
+            appContainer.innerHTML = "<h1>Opskrifter</h1><p>Her kommer dine opskrifter og madplan.</p>";
             break;
-        case "/lager":
-            appContainer.innerHTML = "<h1>Lager</h1><p>Kommer snart...</p>";
+        case "lager":
+            appContainer.innerHTML = "<h1>Lager</h1><p>Oversigt over dit lager og hvad der mangler.</p>";
             break;
-        case "/projekter":
-            appContainer.innerHTML = "<h1>Projekter</h1><p>Kommer snart...</p>";
+        case "projekter":
+            appContainer.innerHTML = "<h1>Projekter</h1><p>Hold styr på husets små og store opgaver.</p>";
             break;
-        case "/budget":
-            appContainer.innerHTML = "<h1>Budget & Formue</h1><p>Kommer snart...</p>";
+        case "budget":
+            appContainer.innerHTML = "<h1>Budget & Formue</h1><p>Økonomisk overblik for husstanden.</p>";
             break;
         default:
-            appContainer.innerHTML = "<h1>404</h1><p>Siden blev ikke fundet.</p>";
+            // Hvis vi ikke kender ruten, gå til dashboard
+            renderDashboard(appContainer);
             break;
     }
 }
