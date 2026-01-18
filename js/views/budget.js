@@ -2,7 +2,7 @@ import { getBudgetPosts, addBudgetPost, deleteBudgetPost, updateBudgetPost } fro
 import { getLoans, calculateLoanForMonth } from "../services/loanService.js";
 
 let selectedMonth = new Date().toISOString().slice(0, 7);
-let currentTab = 'total'; // 'total', 'user1', 'user2'
+let currentTab = 'total'; 
 let editingPostId = null;
 
 export async function renderBudget(container) {
@@ -10,13 +10,9 @@ export async function renderBudget(container) {
         <header class="view-header">
             <h1>Budget & Økonomi</h1>
             <div class="month-selector">
-                <button id="prev-month" class="btn-icon">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </button>
+                <button id="prev-month" class="btn-icon">←</button>
                 <span id="current-month-display" class="month-label">${formatMonth(selectedMonth)}</span>
-                <button id="next-month" class="btn-icon">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </button>
+                <button id="next-month" class="btn-icon">→</button>
             </div>
         </header>
 
@@ -62,7 +58,7 @@ export async function renderBudget(container) {
                             <option value="shared">Fælles (50/50)</option>
                         </select>
                     </div>
-                    <div class="checkbox-group"><input type="checkbox" id="post-recurring" checked><label>Løbende post hver måned</label></div>
+                    <div class="checkbox-group"><input type="checkbox" id="post-recurring" checked><label>Løbende post</label></div>
                     <div class="modal-buttons">
                         <button type="button" id="cancel-btn" class="btn-text">Fortryd</button>
                         <button type="submit" class="btn-submit">Gem post</button>
@@ -88,10 +84,8 @@ async function updateDisplay() {
         if (selectedMonth < p.startDate || (p.endDate && selectedMonth > p.endDate)) return;
         const isUser = currentTab !== 'total';
         if (isUser && p.owner !== currentTab && p.owner !== 'shared') return;
-        
         let m = (isUser && p.owner === 'shared') ? 0.5 : 1;
         let amt = p.amount * m;
-        
         if (p.type === 'income') inc += amt; else exp += amt;
         renderItem(listEl, p, amt, m < 1);
     });
@@ -99,13 +93,10 @@ async function updateDisplay() {
     loans.forEach(l => {
         const isUser = currentTab !== 'total';
         if (isUser && l.owner !== currentTab && l.owner !== 'shared') return;
-        
         const c = calculateLoanForMonth(l, selectedMonth);
         if (c) {
             let m = (isUser && l.owner === 'shared') ? 0.5 : 1;
-            exp += c.interest * m; 
-            princ += c.principalPaid * m;
-            
+            exp += c.interest * m; princ += c.principalPaid * m;
             renderItem(listEl, { id: null, title: l.name + " (Rente)", owner: l.owner, type: 'expense' }, c.interest * m, m < 1, true);
             renderItem(listEl, { id: null, title: l.name + " (Afdrag)", owner: l.owner, type: 'asset' }, c.principalPaid * m, m < 1, true);
         }
@@ -131,7 +122,6 @@ function renderItem(parent, item, amount, isSplit, isAuto = false) {
         </div>
     `;
     parent.appendChild(li);
-    
     if (!isAuto) {
         li.querySelector('[data-edit]').onclick = () => {
             editingPostId = item.id;
@@ -147,29 +137,10 @@ function renderItem(parent, item, amount, isSplit, isAuto = false) {
 }
 
 function setupEvents(container) {
-    document.getElementById('prev-month').onclick = () => { 
-        let d = new Date(selectedMonth + "-01"); 
-        d.setMonth(d.getMonth() - 1); 
-        selectedMonth = d.toISOString().slice(0, 7); 
-        renderBudget(container); 
-    };
-    document.getElementById('next-month').onclick = () => { 
-        let d = new Date(selectedMonth + "-01"); 
-        d.setMonth(d.getMonth() + 1); 
-        selectedMonth = d.toISOString().slice(0, 7); 
-        renderBudget(container); 
-    };
-    container.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { 
-        currentTab = b.dataset.tab; 
-        renderBudget(container); 
-    });
-    
-    document.getElementById('open-modal-btn').onclick = () => { 
-        editingPostId = null; 
-        document.getElementById('budget-form').reset(); 
-        document.getElementById('modal-title').innerText = "Ny budgetpost";
-        document.getElementById('budget-modal').style.display = 'flex'; 
-    };
+    document.getElementById('prev-month').onclick = () => { let d = new Date(selectedMonth+"-01"); d.setMonth(d.getMonth()-1); selectedMonth = d.toISOString().slice(0,7); renderBudget(container); };
+    document.getElementById('next-month').onclick = () => { let d = new Date(selectedMonth+"-01"); d.setMonth(d.getMonth()+1); selectedMonth = d.toISOString().slice(0,7); renderBudget(container); };
+    container.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { currentTab = b.dataset.tab; renderBudget(container); });
+    document.getElementById('open-modal-btn').onclick = () => { editingPostId = null; document.getElementById('budget-form').reset(); document.getElementById('modal-title').innerText = "Ny budgetpost"; document.getElementById('budget-modal').style.display = 'flex'; };
     document.getElementById('cancel-btn').onclick = () => document.getElementById('budget-modal').style.display = 'none';
 
     document.getElementById('budget-form').onsubmit = async (e) => {
@@ -189,6 +160,4 @@ function setupEvents(container) {
     };
 }
 
-function formatMonth(m) { 
-    return new Date(m + "-01").toLocaleDateString('da-DK', { month: 'long', year: 'numeric' }); 
-}
+function formatMonth(m) { return new Date(m + "-01").toLocaleDateString('da-DK', { month: 'long', year: 'numeric' }); }
