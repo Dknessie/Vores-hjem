@@ -1,9 +1,9 @@
 import { addLoan, getLoans, deleteLoan, updateLoan, getLoanEndDate, calculateLoanForMonth, addAsset, getAssets, deleteAsset } from "../services/loanService.js";
 
-// Simulation state holdes i hukommelsen
+// Lokal tilstand for simulatoren
 let simulationState = { monthsOffset: 0, ghostLoans: [] };
 let selectedLoanId = null;
-let currentTab = 'total';
+let currentTab = 'total'; // 'total', 'user1', 'user2'
 let showAssetForm = false;
 let editingLoanId = null;
 
@@ -12,8 +12,8 @@ export async function renderAssets(container) {
     const assets = await getAssets();
     const allLoans = [...realLoans, ...simulationState.ghostLoans];
     
-    // Beregn samlede stats baseret på valgte fane og simulation
-    const statsFuture = calculateComprehensiveStats(allLoans, assets, simulationState.monthsOffset);
+    // Beregn de samlede stats baseret på den valgte fane og simuleret tidsforskydning
+    const stats = calculateComprehensiveStats(allLoans, assets, simulationState.monthsOffset);
 
     container.innerHTML = `
         <header class="view-header">
@@ -27,7 +27,7 @@ export async function renderAssets(container) {
             </div>
         </header>
 
-        <!-- Simulator Panel -->
+        <!-- SIMULATOR PANEL -->
         <section id="simulator-panel" class="simulator-box" style="display: ${simulationState.monthsOffset > 0 ? 'block' : 'none'};">
             <div class="sim-header">
                 <h3>Økonomisk Simulator</h3>
@@ -39,47 +39,47 @@ export async function renderAssets(container) {
             </div>
         </section>
 
-        <!-- Tab Navigation -->
+        <!-- FANER (TAB NAVIGATION) -->
         <div class="tab-control">
             <button class="tab-btn ${currentTab === 'total' ? 'active' : ''}" data-tab="total">Husstanden</button>
             <button class="tab-btn ${currentTab === 'user1' ? 'active' : ''}" data-tab="user1">Mig</button>
             <button class="tab-btn ${currentTab === 'user2' ? 'active' : ''}" data-tab="user2">Kæresten</button>
         </div>
 
-        <!-- Dashboard Oversigt -->
+        <!-- DASHBOARD OVERBLIK -->
         <section class="net-worth-dashboard">
             <div class="main-debt-card ${selectedLoanId ? 'focused' : ''}">
-                <label>${selectedLoanId ? 'Valgt Lån (Restgæld)' : 'Netto Formue (Simuleret)'}</label>
-                <div class="debt-value">${Math.round(selectedLoanId ? statsFuture.selectedLoanDebt : statsFuture.netWorth).toLocaleString()} kr.</div>
+                <label>${selectedLoanId ? 'Valgt Gældspost' : 'Netto Formue'}</label>
+                <div class="debt-value">${Math.round(selectedLoanId ? stats.selectedLoanDebt : stats.netWorth).toLocaleString()} kr.</div>
                 <div class="equity-split">
-                    <span>Aktiver: ${Math.round(statsFuture.totalAssets).toLocaleString()} kr.</span>
-                    <span>Gæld: ${Math.round(statsFuture.totalDebt).toLocaleString()} kr.</span>
+                    <span>Værdi: ${Math.round(stats.totalAssets).toLocaleString()} kr.</span>
+                    <span>Gæld: ${Math.round(stats.totalDebt).toLocaleString()} kr.</span>
                 </div>
                 ${selectedLoanId ? '<button id="clear-selection" class="btn-small-white">Vis alle</button>' : ''}
             </div>
             <div class="debt-stats-grid">
                 <div class="mini-stat">
-                    <label>Mdl. Værditilvækst (Afdrag)</label>
-                    <span class="val positive">+${Math.round(statsFuture.monthlyGrowth).toLocaleString()} kr.</span>
+                    <label>Mdl. Vækst (Afdrag)</label>
+                    <span class="val positive">+${Math.round(stats.monthlyGrowth).toLocaleString()} kr.</span>
                 </div>
                 <div class="mini-stat">
-                    <label>Mdl. Værditab (Depreciering)</label>
-                    <span class="val negative">-${Math.round(statsFuture.monthlyDepreciation).toLocaleString()} kr.</span>
+                    <label>Mdl. Tab (Værditab)</label>
+                    <span class="val negative">-${Math.round(stats.monthlyDepreciation).toLocaleString()} kr.</span>
                 </div>
             </div>
         </section>
 
-        <!-- Formular til Aktiver -->
+        <!-- FORMULAR: AKTIVER -->
         <div id="asset-form-container" class="form-drawer" style="display: ${showAssetForm ? 'block' : 'none'};">
             <div class="asset-card-main">
-                <h3>Registrer Aktiv (Bil, Hus, etc.)</h3>
+                <h3>Registrer nyt aktiv</h3>
                 <form id="asset-form">
                     <div class="input-row">
                         <div class="input-group"><label>Navn</label><input type="text" id="asset-name" placeholder="f.eks. Tesla Model 3" required></div>
-                        <div class="input-group"><label>Værdi nu</label><input type="number" id="asset-value" required></div>
+                        <div class="input-group"><label>Værdi i dag (kr.)</label><input type="number" id="asset-value" required></div>
                     </div>
                     <div class="input-row">
-                        <div class="input-group"><label>Mdl. Værditab (kr.)</label><input type="number" id="asset-depr" value="0"></div>
+                        <div class="input-group"><label>Forventet mdl. værditab (kr.)</label><input type="number" id="asset-depr" value="0"></div>
                         <div class="input-group"><label>Ejer</label>
                             <select id="asset-owner">
                                 <option value="user1">Mig</option>
@@ -89,7 +89,7 @@ export async function renderAssets(container) {
                         </div>
                     </div>
                     <div class="input-group">
-                        <label>Link til eksisterende gæld (valgfrit)</label>
+                        <label>Link til lån (valgfrit)</label>
                         <select id="asset-loan-link">
                             <option value="">Intet lån</option>
                             ${realLoans.map(l => `<option value="${l.id}">${l.name}</option>`).join('')}
@@ -103,7 +103,7 @@ export async function renderAssets(container) {
             </div>
         </div>
 
-        <!-- Formular til Lån -->
+        <!-- FORMULAR: LÅN -->
         <div id="loan-form-container" class="form-drawer" style="display:none;">
             <div class="asset-card-main">
                 <h3 id="loan-form-title">Opret nyt lån</h3>
@@ -132,16 +132,19 @@ export async function renderAssets(container) {
             </div>
         </div>
 
+        <!-- LISTE OVER AKTIVER -->
         <section class="asset-list-section">
             <h3 class="section-title">Dine Aktiver & Friværdi</h3>
             <div class="loan-cards-grid">
                 ${assets.filter(a => currentTab === 'total' || a.owner === currentTab || a.owner === 'shared').map(asset => {
                     const linkedLoan = realLoans.find(l => l.id === asset.linkedLoanId);
-                    const currentVal = asset.value - (simulationState.monthsOffset * (asset.monthlyDepreciation || 0));
-                    const loanCalc = linkedLoan ? calculateLoanForMonth(linkedLoan, getOffsetMonth(simulationState.monthsOffset)) : null;
+                    const months = simulationState.monthsOffset;
+                    const currentVal = asset.value - (months * (asset.monthlyDepreciation || 0));
+                    
+                    const loanCalc = linkedLoan ? calculateLoanForMonth(linkedLoan, getOffsetMonth(months)) : null;
                     const debt = loanCalc ? loanCalc.remainingBalance : 0;
                     
-                    // Beregn ejerandel
+                    // Beregn andel
                     let m = (currentTab !== 'total' && asset.owner === 'shared') ? 0.5 : 1;
                     const equity = (currentVal - debt) * m;
                     
@@ -150,7 +153,7 @@ export async function renderAssets(container) {
                             <div class="loan-card-info">
                                 <h4>${asset.name}</h4>
                                 <small>Ejer: ${asset.owner === 'shared' ? 'Fælles' : (asset.owner === 'user1' ? 'Mig' : 'Kæreste')}</small><br>
-                                <small>Friværdi: <strong>${Math.round(equity).toLocaleString()} kr.</strong> ${m < 1 ? '(din 50%)' : ''}</small>
+                                <small>Friværdi: <strong>${Math.round(equity).toLocaleString()} kr.</strong> ${m < 1 ? '(50% andel)' : ''}</small>
                             </div>
                             <div class="loan-card-meta">
                                 <span class="val ${equity > 0 ? 'positive' : 'negative'}">${Math.round(currentVal * m).toLocaleString()} kr.</span>
@@ -159,25 +162,26 @@ export async function renderAssets(container) {
                         </div>
                     `;
                 }).join('')}
-                ${assets.length === 0 ? '<p class="text-light">Ingen aktiver registreret.</p>' : ''}
+                ${assets.length === 0 ? '<p class="text-light">Ingen aktiver fundet.</p>' : ''}
             </div>
         </section>
 
+        <!-- LISTE OVER LÅN -->
         <section class="loan-list-section">
-            <h3 class="section-title">Aktive lån & Simulationer</h3>
+            <h3 class="section-title">Gældsposter</h3>
             <div class="loan-cards-grid">
                 ${allLoans.filter(l => currentTab === 'total' || l.owner === currentTab || l.owner === 'shared').map(loan => {
                     const isUser = currentTab !== 'total';
                     let m = (isUser && loan.owner === 'shared') ? 0.5 : 1;
-                    const loanCalc = calculateLoanForMonth(loan, getOffsetMonth(simulationState.monthsOffset));
-                    const currentBalance = loanCalc ? loanCalc.remainingBalance : 0;
+                    const calc = calculateLoanForMonth(loan, getOffsetMonth(simulationState.monthsOffset));
+                    const balance = calc ? calc.remainingBalance : 0;
                     
                     return `
                         <div class="loan-summary-card ${selectedLoanId === loan.id ? 'active' : ''} ${loan.isGhost ? 'ghost-card' : ''}" data-id="${loan.id}">
                             <div class="loan-card-info">
                                 <h4>${loan.name} ${loan.isGhost ? '<span class="sim-badge">TEST</span>' : ''}</h4>
-                                <p>${loan.owner === 'shared' ? 'Fælles' : (loan.owner === 'user1' ? 'Mig' : 'Kæreste')} ${m < 1 ? '(50%)' : ''}</p>
-                                <small>Restgæld: ${Math.round(currentBalance * m).toLocaleString()} kr.</small>
+                                <p>${loan.owner === 'shared' ? 'Fælles' : (loan.owner === 'user1' ? 'Mig' : 'Kæreste')} ${m < 1 ? '(50% andel)' : ''}</p>
+                                <small>Restgæld: ${Math.round(balance * m).toLocaleString()} kr.</small>
                             </div>
                             <div class="loan-card-meta">
                                 <span class="loan-amount">${Math.round(loan.monthlyPayment * m).toLocaleString()} kr/mdr</span>
@@ -189,7 +193,7 @@ export async function renderAssets(container) {
                         </div>
                     `;
                 }).join('')}
-                ${allLoans.length === 0 ? '<p class="text-light">Ingen lån registreret.</p>' : ''}
+                ${allLoans.length === 0 ? '<p class="text-light">Ingen lån fundet.</p>' : ''}
             </div>
         </section>
     `;
@@ -197,24 +201,25 @@ export async function renderAssets(container) {
 }
 
 function getOffsetMonth(offset) {
-    const d = new Date(); d.setMonth(d.getMonth() + offset);
+    const d = new Date();
+    d.setMonth(d.getMonth() + offset);
     return d.toISOString().slice(0, 7);
 }
 
 function calculateComprehensiveStats(loans, assets, monthsOffset) {
     const targetMonth = getOffsetMonth(monthsOffset);
-    let totalDebt = 0, totalAssets = 0, monthlyGrowth = 0, monthlyDepr = 0, selectedLoanDebt = 0;
-
     const isUser = currentTab !== 'total';
+    
+    let totalDebt = 0, totalAssets = 0, monthlyGrowth = 0, monthlyDepr = 0, selectedLoanDebt = 0;
 
     loans.forEach(l => {
         if (isUser && l.owner !== currentTab && l.owner !== 'shared') return;
         let m = (isUser && l.owner === 'shared') ? 0.5 : 1;
 
         const c = calculateLoanForMonth(l, targetMonth);
-        if (c) { 
-            totalDebt += c.remainingBalance * m; 
-            monthlyGrowth += c.principalPaid * m; 
+        if (c) {
+            totalDebt += c.remainingBalance * m;
+            monthlyGrowth += c.principalPaid * m;
             if (l.id === selectedLoanId) selectedLoanDebt = c.remainingBalance * m;
         }
     });
@@ -223,8 +228,8 @@ function calculateComprehensiveStats(loans, assets, monthsOffset) {
         if (isUser && a.owner !== currentTab && a.owner !== 'shared') return;
         let m = (isUser && a.owner === 'shared') ? 0.5 : 1;
 
-        const val = a.value - (monthsOffset * (a.monthlyDepreciation || 0));
-        totalAssets += Math.max(0, val * m);
+        const valNow = a.value - (monthsOffset * (a.monthlyDepreciation || 0));
+        totalAssets += Math.max(0, valNow * m);
         monthlyDepr += (a.monthlyDepreciation || 0) * m;
     });
 
@@ -239,37 +244,30 @@ function calculateComprehensiveStats(loans, assets, monthsOffset) {
 }
 
 function setupEvents(container, realLoans, assets) {
-    // Simulator
+    // Simulator events
     const slider = document.getElementById('sim-months-slider');
     if (slider) {
-        slider.oninput = (e) => { 
-            simulationState.monthsOffset = parseInt(e.target.value); 
-            document.getElementById('months-display').innerText = simulationState.monthsOffset; 
-            renderAssets(container); 
+        slider.oninput = (e) => {
+            simulationState.monthsOffset = parseInt(e.target.value);
+            document.getElementById('months-display').innerText = simulationState.monthsOffset;
+            renderAssets(container);
         };
     }
-    
-    const resetBtn = document.getElementById('reset-sim');
-    if (resetBtn) resetBtn.onclick = () => {
+
+    document.getElementById('reset-sim').onclick = () => {
         simulationState.monthsOffset = 0;
         simulationState.ghostLoans = [];
         renderAssets(container);
     };
 
-    const toggleSim = document.getElementById('toggle-simulator');
-    if (toggleSim) toggleSim.onclick = () => { 
+    document.getElementById('toggle-simulator').onclick = () => {
         const panel = document.getElementById('simulator-panel');
-        if (panel.style.display === 'none') {
-            panel.style.display = 'block';
-            if (simulationState.monthsOffset === 0) simulationState.monthsOffset = 1;
-        } else {
-            panel.style.display = 'none';
-            simulationState.monthsOffset = 0;
-        }
-        renderAssets(container);
+        const isHidden = panel.style.display === 'none';
+        panel.style.display = isHidden ? 'block' : 'none';
+        if (!isHidden) { simulationState.monthsOffset = 0; renderAssets(container); }
     };
 
-    // Tabs
+    // Tab skift (Filtrering)
     container.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
             currentTab = btn.dataset.tab;
@@ -277,10 +275,10 @@ function setupEvents(container, realLoans, assets) {
         };
     });
 
-    // Asset Form
+    // Asset Formular
     document.getElementById('add-asset-btn').onclick = () => { showAssetForm = true; renderAssets(container); };
     document.getElementById('close-asset-form').onclick = () => { showAssetForm = false; renderAssets(container); };
-
+    
     document.getElementById('asset-form').onsubmit = async (e) => {
         e.preventDefault();
         await addAsset({
@@ -294,7 +292,7 @@ function setupEvents(container, realLoans, assets) {
         renderAssets(container);
     };
 
-    // Loan Form
+    // Lån Formular
     document.getElementById('toggle-loan-form').onclick = () => {
         editingLoanId = null;
         document.getElementById('loan-form').reset();
@@ -321,10 +319,7 @@ function setupEvents(container, realLoans, assets) {
 
     // Actions
     container.querySelectorAll('[data-delete-asset]').forEach(btn => btn.onclick = async () => {
-        if (confirm('Slet dette aktiv?')) { 
-            await deleteAsset(btn.dataset.deleteAsset); 
-            renderAssets(container); 
-        }
+        if (confirm('Slet dette aktiv permanent?')) { await deleteAsset(btn.dataset.deleteAsset); renderAssets(container); }
     });
 
     container.querySelectorAll('.loan-summary-card').forEach(card => card.onclick = (e) => {
@@ -333,14 +328,12 @@ function setupEvents(container, realLoans, assets) {
         renderAssets(container);
     });
 
-    if (document.getElementById('clear-selection')) document.getElementById('clear-selection').onclick = () => { 
-        selectedLoanId = null; 
-        renderAssets(container); 
-    };
+    if (document.getElementById('clear-selection')) {
+        document.getElementById('clear-selection').onclick = () => { selectedLoanId = null; renderAssets(container); };
+    }
 
     container.querySelectorAll('[data-edit]').forEach(btn => btn.onclick = () => {
-        const isGhost = btn.dataset.ghost === "true";
-        const loan = isGhost ? simulationState.ghostLoans.find(l => l.id === btn.dataset.edit) : realLoans.find(l => l.id === btn.dataset.edit);
+        const loan = realLoans.find(l => l.id === btn.dataset.edit);
         editingLoanId = loan.id;
         document.getElementById('loan-form-title').innerText = "Rediger lån";
         document.getElementById('loan-name').value = loan.name;
@@ -353,9 +346,6 @@ function setupEvents(container, realLoans, assets) {
     });
 
     container.querySelectorAll('[data-delete]').forEach(btn => btn.onclick = async () => {
-        if (confirm('Slet dette lån?')) {
-            await deleteLoan(btn.dataset.delete);
-            renderAssets(container);
-        }
+        if (confirm('Slet dette lån permanent?')) { await deleteLoan(btn.dataset.delete); renderAssets(container); }
     });
 }
