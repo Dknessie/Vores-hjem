@@ -1,6 +1,5 @@
 /**
- * Firebase Konfiguration
- * Erstat pladsholderne med dine egne data fra Firebase Console
+ * Firebase Konfiguration - Opdateret med dine data
  */
 export const firebaseConfig = {
     apiKey: "AIzaSyB7na2GTQ_fCnMVx72dcDBFiSnzG6FWdnc",
