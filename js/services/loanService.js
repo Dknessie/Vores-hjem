@@ -4,21 +4,32 @@ import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "firebase
 const LOAN_COLL = "loans";
 const ASSET_COLL = "assets";
 
+/**
+ * Tilføjer et nyt lån til databasen
+ */
 export async function addLoan(loanData) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const docRef = await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL), loanData);
+        const { isGhost, ...saveData } = loanData; 
+        const docRef = await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL), saveData);
         return docRef.id;
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Fejl ved tilføjelse af lån:", e); }
 }
 
+/**
+ * Opdaterer et eksisterende lån
+ */
 export async function updateLoan(id, loanData) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        await updateDoc(doc(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL, id), loanData);
-    } catch (e) { console.error(e); }
+        const { isGhost, ...saveData } = loanData;
+        await updateDoc(doc(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL, id), saveData);
+    } catch (e) { console.error("Fejl ved opdatering af lån:", e); }
 }
 
+/**
+ * Henter alle lån
+ */
 export async function getLoans() {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -27,21 +38,30 @@ export async function getLoans() {
     } catch (e) { return []; }
 }
 
+/**
+ * Sletter et lån
+ */
 export async function deleteLoan(id) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         await deleteDoc(doc(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL, id));
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Fejl ved sletning af lån:", e); }
 }
 
+/**
+ * Tilføjer et nyt aktiv (bil, hus etc.)
+ */
 export async function addAsset(assetData) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const docRef = await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL), assetData);
         return docRef.id;
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Fejl ved tilføjelse af aktiv:", e); }
 }
 
+/**
+ * Henter alle aktiver
+ */
 export async function getAssets() {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -50,21 +70,32 @@ export async function getAssets() {
     } catch (e) { return []; }
 }
 
+/**
+ * Sletter et aktiv
+ */
 export async function deleteAsset(id) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         await deleteDoc(doc(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL, id));
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Fejl ved sletning af aktiv:", e); }
 }
 
+/**
+ * Beregner lånets status for en specifik måned
+ */
 export function calculateLoanForMonth(loan, targetMonthStr) {
     const start = new Date(loan.startDate + "-01");
     const target = new Date(targetMonthStr + "-01");
+    
+    // Hvis vi kigger bagud i tiden før lånet startede
     if (target < start) return { interest: 0, principalPaid: 0, remainingBalance: loan.principal };
+
     const monthsDiff = (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth());
     const monthlyRate = (loan.interestRate / 100) / 12;
+    
     let balance = loan.principal;
     let interest = 0, principalPaid = 0;
+    
     for (let i = 0; i <= monthsDiff; i++) {
         interest = balance * monthlyRate;
         if (balance + interest <= loan.monthlyPayment) {
@@ -79,6 +110,9 @@ export function calculateLoanForMonth(loan, targetMonthStr) {
     return { interest, principalPaid, remainingBalance: Math.max(0, balance) };
 }
 
+/**
+ * Finder den forventede slutdato for et lån
+ */
 export function getLoanEndDate(loan) {
     let balance = loan.principal;
     let date = new Date(loan.startDate + "-01");
