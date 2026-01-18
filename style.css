@@ -225,7 +225,7 @@ button {
     box-shadow: var(--shadow);
 }
 
-/* --- BUDGET KATEGORI VISNING (Den nye logik) --- */
+/* --- BUDGET KATEGORI VISNING --- */
 .category-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -312,6 +312,13 @@ button {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    position: relative;
+    transition: var(--transition);
+}
+
+.main-debt-card.focused {
+    border: 4px solid var(--primary-green);
+    box-shadow: 0 0 30px rgba(62, 92, 74, 0.4);
 }
 
 .equity-split {
@@ -360,6 +367,7 @@ button {
 
 .stat-card.income div { color: var(--success-green); }
 .stat-card.expenses div { color: var(--danger-red); }
+.stat-card.assets div { color: var(--primary-green); }
 
 .mini-stat {
     background: white;
@@ -395,6 +403,13 @@ button {
     animation: slideDown 0.4s ease-out;
 }
 
+.sim-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
 .sim-controls {
     display: flex;
     align-items: center;
@@ -416,7 +431,18 @@ button {
     border-color: var(--sim-color);
 }
 
-/* --- FORMS & MODALS --- */
+.sim-badge {
+    background: var(--sim-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 900;
+    margin-left: 8px;
+    text-transform: uppercase;
+}
+
+/* --- FORMS & DRAWERS --- */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -468,6 +494,18 @@ button {
 }
 
 /* --- LISTS & CARDS --- */
+.section-title {
+    margin: 2rem 0 1.5rem 0;
+    font-size: 1.2rem;
+    color: var(--wood-brown);
+}
+
+.loan-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
 .loan-summary-card {
     background: white;
     padding: 1.5rem;
@@ -477,6 +515,18 @@ button {
     justify-content: space-between;
     align-items: center;
     border: 2px solid transparent;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.loan-summary-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-blue);
+}
+
+.loan-summary-card.active {
+    border-color: var(--primary-green);
+    background: #fdfdfa;
 }
 
 .asset-card { border-left: 4px solid var(--accent-blue); }
@@ -485,6 +535,8 @@ button {
 .loan-card-info small { color: var(--text-light); }
 
 .loan-card-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+
+.ghost-card { border: 2px dashed #cbd5e0 !important; background: #f9fbfc !important; }
 
 /* --- BUTTONS --- */
 .btn-add, .btn-submit {
@@ -513,19 +565,34 @@ button {
     height: 28px;
     border-radius: 6px;
     font-size: 0.8rem;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.btn-del-minimal {
+.btn-edit-minimal, .btn-del-minimal {
     background: transparent;
     color: #cbd5e0;
     font-size: 1.1rem;
+    padding: 5px;
 }
 
+.btn-edit-minimal:hover { color: var(--accent-blue); }
 .btn-del-minimal:hover { color: var(--danger-red); }
 
 .btn-text { background: transparent; color: var(--text-light); font-weight: 600; }
 
 .btn-text-small { background: transparent; color: var(--text-light); font-size: 0.8rem; text-decoration: underline; }
+
+.btn-small-white { 
+    background: rgba(255,255,255,0.2); 
+    color: white; 
+    padding: 6px 16px; 
+    border-radius: 50px; 
+    font-size: 0.75rem; 
+    margin-top: 15px; 
+    width: fit-content;
+}
 
 /* --- ANIMATIONS --- */
 @keyframes slideDown {
