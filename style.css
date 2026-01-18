@@ -200,7 +200,7 @@ button {
     color: white;
 }
 
-/* --- TAB CONTROL --- */
+/* --- TAB CONTROL (Fane-vælger) --- */
 .tab-control {
     display: flex;
     background: #e9e8e0;
@@ -225,7 +225,7 @@ button {
     box-shadow: var(--shadow);
 }
 
-/* --- BUDGET KATEGORI VISNING --- */
+/* --- BUDGET KATEGORI & STATUS BARER --- */
 .category-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -269,7 +269,7 @@ button {
 .progress-fill {
     height: 100%;
     background: var(--success-green);
-    transition: width 0.8s ease-in-out;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .progress-fill.warning {
@@ -291,7 +291,6 @@ button {
 }
 
 .small-item:last-child { border-bottom: none; }
-
 .small-item span:first-child { font-weight: 500; }
 .small-item span:last-child { font-weight: 700; display: flex; align-items: center; gap: 8px; }
 
