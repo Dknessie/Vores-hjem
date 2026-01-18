@@ -16,18 +16,23 @@ export async function addBudgetPost(postData) {
 }
 
 /**
- * Henter alle budgetposter
+ * Henter alle budgetposter fra databasen
  */
 export async function getBudgetPosts() {
-    const querySnapshot = await getDocs(collection(state.db, COLLECTION_NAME));
-    return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    }));
+    try {
+        const querySnapshot = await getDocs(collection(state.db, COLLECTION_NAME));
+        return querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    } catch (e) {
+        console.error("Fejl ved hentning af poster: ", e);
+        return [];
+    }
 }
 
 /**
- * Sletter en post
+ * Sletter en specifik post
  */
 export async function deleteBudgetPost(id) {
     try {
