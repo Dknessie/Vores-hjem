@@ -1,13 +1,15 @@
 import { renderDashboard } from "./views/dashboard.js";
 import { renderBudget } from "./views/budget.js";
+import { renderAssets } from "./views/assets.js";
 
 /**
- * Router-modul - Styrer hvilken visning der skal indlæses
+ * Router-modul
+ * Håndterer skift mellem de forskellige undersider
  */
 export function initRouter() {
     const appContainer = document.querySelector("#app");
     
-    // Hent ruten fra URL hash (f.eks. #budget)
+    // Hent ruten fra URL hash
     let route = window.location.hash.replace("#", "").replace("/", "");
     
     // Standard rute
@@ -15,26 +17,23 @@ export function initRouter() {
         route = "dashboard";
     }
 
-    // Ryd containeren før ny visning
     appContainer.innerHTML = "";
 
-    // Her kobler vi ruterne til de rigtige funktioner
     switch (route) {
         case "dashboard":
             renderDashboard(appContainer);
             break;
         case "budget":
-            // Nu kalder vi den rigtige funktion fra budget.js
             renderBudget(appContainer);
             break;
+        case "formue":
+            renderAssets(appContainer);
+            break;
         case "opskrifter":
-            appContainer.innerHTML = "<h1>Opskrifter</h1><p>Kommer snart...</p>";
+            appContainer.innerHTML = "<h1>Opskrifter</h1><p>Her kommer dine opskrifter og madplan.</p>";
             break;
         case "lager":
-            appContainer.innerHTML = "<h1>Lager</h1><p>Kommer snart...</p>";
-            break;
-        case "projekter":
-            appContainer.innerHTML = "<h1>Projekter</h1><p>Kommer snart...</p>";
+            appContainer.innerHTML = "<h1>Lager</h1><p>Oversigt over dit lager.</p>";
             break;
         default:
             renderDashboard(appContainer);
