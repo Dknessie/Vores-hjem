@@ -57,9 +57,7 @@ export async function renderAssets(container) {
                         <div class="input-group"><label>Startmåned</label><input type="month" id="loan-start" required></div>
                         <div class="input-group"><label>Ejer</label>
                             <select id="loan-owner">
-                                <option value="user1">Mig</option>
-                                <option value="user2">Kæreste</option>
-                                <option value="shared">Fælles (50/50)</option>
+                                <option value="user1">Mig</option><option value="user2">Kæreste</option><option value="shared">Fælles (50/50)</option>
                             </select>
                         </div>
                     </div>
@@ -92,7 +90,6 @@ export async function renderAssets(container) {
             </div>
         </section>
     `;
-
     setupEvents(container, loans);
 }
 
@@ -100,55 +97,27 @@ function calculateStats(loans) {
     const now = new Date().toISOString().slice(0, 7);
     let debt = 0, int = 0, princ = 0, maxD = "";
     const targets = selectedLoanId ? loans.filter(l => l.id === selectedLoanId) : loans;
-
     targets.forEach(loan => {
         const isUser = currentTab !== 'total';
         if (isUser && loan.owner !== currentTab && loan.owner !== 'shared') return;
-
         const calc = calculateLoanForMonth(loan, now);
         if (calc) {
             let m = (isUser && loan.owner === 'shared') ? 0.5 : 1;
             debt += calc.remainingBalance * m;
             int += calc.interest * m;
             princ += calc.principalPaid * m;
-            const end = getLoanEndDate(loan);
-            if (end > maxD) maxD = end;
+            const end = getLoanEndDate(loan); if (end > maxD) maxD = end;
         }
     });
-
-    return {
-        displayDebt: debt,
-        displayInterest: int,
-        displayPrincipal: princ,
-        displayDate: maxD ? new Date(maxD + "-01").toLocaleDateString('da-DK', {month:'long', year:'numeric'}) : "N/A"
-    };
+    return { displayDebt: debt, displayInterest: int, displayPrincipal: princ, displayDate: maxD ? new Date(maxD + "-01").toLocaleDateString('da-DK', {month:'long', year:'numeric'}) : "N/A" };
 }
 
 function setupEvents(container, loans) {
-    container.querySelectorAll('.tab-btn').forEach(btn => btn.onclick = () => { 
-        currentTab = btn.dataset.tab; 
-        renderAssets(container); 
-    });
-
-    document.getElementById('toggle-loan-form').onclick = () => {
-        editingLoanId = null;
-        document.getElementById('loan-form').reset();
-        document.getElementById('loan-form-title').innerText = "Opret nyt lån";
-        document.getElementById('loan-form-container').style.display = 'block';
-    };
-    
+    container.querySelectorAll('.tab-btn').forEach(btn => btn.onclick = () => { currentTab = btn.dataset.tab; renderAssets(container); });
+    document.getElementById('toggle-loan-form').onclick = () => { editingLoanId = null; document.getElementById('loan-form').reset(); document.getElementById('loan-form-title').innerText = "Opret nyt lån"; document.getElementById('loan-form-container').style.display = 'block'; };
     document.getElementById('close-form').onclick = () => document.getElementById('loan-form-container').style.display = 'none';
-
-    container.querySelectorAll('.loan-summary-card').forEach(card => card.onclick = (e) => {
-        if (e.target.closest('button')) return;
-        selectedLoanId = selectedLoanId === card.dataset.id ? null : card.dataset.id;
-        renderAssets(container);
-    });
-
-    if (document.getElementById('clear-selection')) {
-        document.getElementById('clear-selection').onclick = () => { selectedLoanId = null; renderAssets(container); };
-    }
-
+    container.querySelectorAll('.loan-summary-card').forEach(card => card.onclick = (e) => { if (e.target.closest('button')) return; selectedLoanId = selectedLoanId === card.dataset.id ? null : card.dataset.id; renderAssets(container); });
+    if (document.getElementById('clear-selection')) document.getElementById('clear-selection').onclick = () => { selectedLoanId = null; renderAssets(container); };
     container.querySelectorAll('[data-edit]').forEach(btn => btn.onclick = () => {
         const loan = loans.find(l => l.id === btn.dataset.edit);
         editingLoanId = loan.id;
@@ -161,14 +130,7 @@ function setupEvents(container, loans) {
         document.getElementById('loan-owner').value = loan.owner;
         document.getElementById('loan-form-container').style.display = 'block';
     });
-
-    container.querySelectorAll('[data-delete]').forEach(btn => btn.onclick = async () => {
-        if (confirm('Slet lån permanent?')) {
-            await deleteLoan(btn.dataset.delete);
-            renderAssets(container);
-        }
-    });
-
+    container.querySelectorAll('[data-delete]').forEach(btn => btn.onclick = async () => { if (confirm('Slet lån?')) { await deleteLoan(btn.dataset.delete); renderAssets(container); } });
     document.getElementById('loan-form').onsubmit = async (e) => {
         e.preventDefault();
         const data = {
@@ -179,8 +141,7 @@ function setupEvents(container, loans) {
             startDate: document.getElementById('loan-start').value,
             owner: document.getElementById('loan-owner').value
         };
-        if (editingLoanId) await updateLoan(editingLoanId, data);
-        else await addLoan(data);
+        if (editingLoanId) await updateLoan(editingLoanId, data); else await addLoan(data);
         renderAssets(container);
     };
 }
