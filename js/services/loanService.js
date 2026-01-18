@@ -34,9 +34,7 @@ export async function deleteLoan(id) {
 }
 
 /**
- * Beregner renter og afdrag for et lån i en specifik måned
- * @param {Object} loan - Låneobjektet
- * @param {String} targetMonth - Måneden der skal beregnes for (YYYY-MM)
+ * Beregner detaljer for et lån i en bestemt måned
  */
 export function calculateLoanForMonth(loan, targetMonth) {
     const start = new Date(loan.startDate + "-01");
@@ -44,37 +42,49 @@ export function calculateLoanForMonth(loan, targetMonth) {
     
     if (target < start) return null;
 
-    // Antal måneder siden start
     const monthsDiff = (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth());
+    const monthlyRate = (loan.interestRate / 100) / 12;
     
     let currentBalance = loan.principal;
-    const monthlyRate = (loan.interestRate / 100) / 12;
     let interest = 0;
     let principalPaid = 0;
 
-    // Vi kører en løkke fra start til den valgte måned for at finde den korrekte restgæld
     for (let i = 0; i <= monthsDiff; i++) {
         interest = currentBalance * monthlyRate;
         
-        // Hvis restgæld + rente er mindre end ydelsen, er det sidste afdrag
-        if (currentBalance + interest < loan.monthlyPayment) {
+        if (currentBalance + interest <= loan.monthlyPayment) {
             principalPaid = currentBalance;
             currentBalance = 0;
-            // Hvis vi er forbi slutdatoen, returner null
-            if (i < monthsDiff) return null; 
+            if (i < monthsDiff) return null; // Lånet er allerede slut
             break;
         } else {
             principalPaid = loan.monthlyPayment - interest;
             currentBalance -= principalPaid;
         }
-        
-        // Hvis vi når 0 før target month, er lånet slut
-        if (currentBalance <= 0 && i < monthsDiff) return null;
     }
 
     return {
         interest: Math.round(interest),
         principalPaid: Math.round(principalPaid),
-        remainingBalance: Math.round(currentBalance)
+        remainingBalance: Math.max(0, Math.round(currentBalance))
     };
+}
+
+/**
+ * Beregner hvornår et lån er færdigbetalt
+ */
+export function getLoanEndDate(loan) {
+    let balance = loan.principal;
+    let date = new Date(loan.startDate + "-01");
+    const monthlyRate = (loan.interestRate / 100) / 12;
+    let safetyIdx = 0;
+
+    while (balance > 0 && safetyIdx < 600) { // Max 50 år
+        let interest = balance * monthlyRate;
+        let principalPaid = loan.monthlyPayment - interest;
+        balance -= principalPaid;
+        date.setMonth(date.getMonth() + 1);
+        safetyIdx++;
+    }
+    return date.toISOString().slice(0, 7);
 }
