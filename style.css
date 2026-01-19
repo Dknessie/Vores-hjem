@@ -93,7 +93,7 @@ button:disabled {
     padding: 0 1.5rem;
 }
 
-/* --- DASHBOARD (LANDING PAGE) --- */
+/* --- DASHBOARD --- */
 .dashboard-header {
     margin-bottom: 3.5rem;
     border-left: 6px solid var(--accent-blue);
@@ -186,7 +186,7 @@ button:disabled {
     color: white;
 }
 
-/* --- TAB CONTROL (Fane-vælger) --- */
+/* --- TAB CONTROL --- */
 .tab-control {
     display: flex;
     background: #e9e8e0;
@@ -211,7 +211,7 @@ button:disabled {
     box-shadow: var(--shadow);
 }
 
-/* --- STAT CARDS & OVERVIEW --- */
+/* --- BUDGET OVERVIEW & STAT CARDS --- */
 .budget-overview {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -244,9 +244,9 @@ button:disabled {
 .stat-card.income div { color: var(--success-green); }
 .stat-card.expenses div { color: var(--danger-red); }
 .stat-card.assets div { color: var(--primary-green); }
-.stat-card.cashflow div { color: var(--text-main); }
+.stat-card.cashflow div { color: var(--text-main); border-top: 2px solid #f0f0f0; padding-top: 5px; margin-top: 5px; }
 
-/* --- BUDGET KATEGORI & STATUS BARER --- */
+/* --- BUDGET KATEGORIER --- */
 .category-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -302,6 +302,7 @@ button:disabled {
     background: var(--danger-red);
 }
 
+/* CLEAN LOOK: Lister uden ikoner/badges */
 .cat-items {
     list-style: none;
 }
@@ -317,18 +318,15 @@ button:disabled {
 }
 
 .small-item:last-child { border-bottom: none; }
-.small-item span:first-child { font-weight: 500; }
-.small-item span:last-child { font-weight: 700; display: flex; align-items: center; gap: 8px; }
 
-/* CLEAN LOOK: Automatiske poster i kursiv, ingen badges/pile */
-.auto-item {
+.auto-item, .principal-item {
     font-style: italic;
     color: var(--text-light);
 }
 
 .principal-item {
-    font-style: italic;
     color: var(--primary-green);
+    opacity: 0.8;
 }
 
 /* --- ASSETS & NET WORTH DASHBOARD --- */
@@ -402,7 +400,7 @@ button:disabled {
 .val.positive { color: var(--success-green); }
 .val.negative { color: var(--danger-red); }
 
-/* --- SIMULATOR & DETAIL BOXES --- */
+/* --- SIMULATOR & DETALJER --- */
 .simulator-box, .loan-detail-box {
     background: #eef2f4;
     border: 2px solid #d1dee4;
@@ -439,6 +437,7 @@ button:disabled {
     cursor: pointer;
     background: #cbd5e0;
     border-radius: 10px;
+    outline: none;
 }
 
 .val-large {
@@ -457,13 +456,7 @@ button:disabled {
     text-transform: uppercase;
 }
 
-.btn-outline.active-sim {
-    background: var(--sim-color);
-    color: white;
-    border-color: var(--sim-color);
-}
-
-/* --- FORMS & DRAWERS --- */
+/* --- FORMS & MODALS --- */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
