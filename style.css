@@ -1,4 +1,4 @@
-/* --- CSS VARIABLER (Hjemmets farvepalette) --- */
+/* --- CSS VARIABLER (Hjemmets botaniske palette) --- */
 :root {
     --bg-color: #f8f7f2;          /* Lys greige/varm hvid (Væggene) */
     --card-bg: #ffffff;           /* Ren hvid til kort */
@@ -41,6 +41,11 @@ button {
     border: none;
     outline: none;
     transition: var(--transition);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* --- NAVIGATION --- */
@@ -129,26 +134,6 @@ button {
     display: block;
 }
 
-.card h3 {
-    font-size: 1.4rem;
-    color: var(--wood-brown);
-    margin-bottom: 0.8rem;
-}
-
-.card p {
-    color: var(--text-light);
-    font-size: 0.95rem;
-    margin-bottom: 2rem;
-}
-
-.action-text {
-    color: var(--primary-green);
-    font-weight: 700;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
 /* --- SHARED HEADER & SELECTORS --- */
 .view-header {
     display: flex;
@@ -226,7 +211,7 @@ button {
     box-shadow: var(--shadow);
 }
 
-/* --- BUDGET OVERVIEW & STAT CARDS --- */
+/* --- STAT CARDS & OVERVIEW --- */
 .budget-overview {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -283,6 +268,11 @@ button {
     margin-bottom: 1.2rem;
 }
 
+.cat-header h4 {
+    font-size: 1.1rem;
+    color: var(--wood-brown);
+}
+
 .target-input {
     width: 100px;
     padding: 4px 8px;
@@ -329,15 +319,15 @@ button {
 .small-item span:first-child { font-weight: 500; }
 .small-item span:last-child { font-weight: 700; display: flex; align-items: center; gap: 8px; }
 
+/* CLEAN LOOK: Automatiske poster uden pile/badges */
+.auto-item {
+    font-style: italic;
+    color: var(--text-light);
+}
+
 .principal-item {
     font-style: italic;
     color: var(--primary-green);
-}
-
-.principal-item::before {
-    content: '↗';
-    margin-right: 5px;
-    font-weight: 800;
 }
 
 /* --- ASSETS & NET WORTH DASHBOARD --- */
@@ -446,6 +436,8 @@ button {
     height: 8px;
     accent-color: var(--sim-color);
     cursor: pointer;
+    background: #cbd5e0;
+    border-radius: 10px;
 }
 
 .val-large {
@@ -518,7 +510,7 @@ button {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     margin-bottom: 3rem;
-    animation: slideDown 0.4s ease-out;
+    animation: slideDown 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 /* --- LISTS & CARDS --- */
@@ -557,14 +549,12 @@ button {
     background: #fdfdfa;
 }
 
-.asset-card { border-left: 4px solid var(--accent-blue); }
+.asset-card { border-left: 6px solid var(--accent-blue); }
 
 .loan-card-info h4 { color: var(--wood-brown); margin-bottom: 2px; }
 .loan-card-info small { color: var(--text-light); }
 
 .loan-card-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
-
-.ghost-card { border: 2px dashed #cbd5e0 !important; background: #f9fbfc !important; }
 
 /* --- BUTTONS --- */
 .btn-add, .btn-submit {
@@ -573,6 +563,12 @@ button {
     padding: 0.9rem 1.8rem;
     border-radius: 12px;
     font-weight: 700;
+    box-shadow: 0 4px 12px rgba(62, 92, 74, 0.25);
+}
+
+.btn-add:hover, .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(62, 92, 74, 0.35);
 }
 
 .btn-outline {
@@ -632,6 +628,7 @@ button {
 @media (max-width: 900px) {
     .net-worth-dashboard, .sim-controls { grid-template-columns: 1fr; }
     .debt-value { font-size: 2.8rem; }
+    .sim-controls { gap: 1.5rem; }
 }
 
 @media (max-width: 600px) {
