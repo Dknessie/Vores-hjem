@@ -6,7 +6,6 @@ let currentTab = 'total';
 let editingPostId = null;
 let isEditingTargets = false;
 
-// Nye kategorinavne som ønsket
 let defaultCategories = {
     indtægter: { name: "Indtægter", target: 30000 },
     faste: { name: "Faste udgifter", target: 12000 },
@@ -18,37 +17,24 @@ let defaultCategories = {
 let activeCategories = JSON.parse(JSON.stringify(defaultCategories));
 
 export async function renderBudget(container) {
-    // Logik til at lægge budgetmål sammen for Husstanden
     if (currentTab === 'total') {
-        const t1 = await getBudgetTargets('user1');
-        const t2 = await getBudgetTargets('user2');
-        const ts = await getBudgetTargets('shared');
-        
+        const t1 = await getBudgetTargets('user1'), t2 = await getBudgetTargets('user2'), ts = await getBudgetTargets('shared');
         activeCategories = JSON.parse(JSON.stringify(defaultCategories));
-        Object.keys(activeCategories).forEach(key => {
-            let sum = 0;
-            if (t1 && t1[key]) sum += t1[key].target;
-            if (t2 && t2[key]) sum += t2[key].target;
-            if (ts && ts[key]) sum += ts[key].target;
-            
-            // Hvis der er indtastet mål, bruger vi summen, ellers default
-            if (sum > 0) activeCategories[key].target = sum;
+        Object.keys(activeCategories).forEach(k => {
+            let sum = (t1?.[k]?.target || 0) + (t2?.[k]?.target || 0) + (ts?.[k]?.target || 0);
+            if (sum > 0) activeCategories[k].target = sum;
         });
     } else {
-        const savedTargets = await getBudgetTargets(currentTab);
+        const saved = await getBudgetTargets(currentTab);
         activeCategories = JSON.parse(JSON.stringify(defaultCategories));
-        if (savedTargets) {
-            Object.keys(savedTargets).forEach(key => {
-                if (activeCategories[key]) activeCategories[key].target = savedTargets[key].target;
-            });
-        }
+        if (saved) Object.keys(saved).forEach(k => { if (activeCategories[k]) activeCategories[k].target = saved[k].target; });
     }
 
     container.innerHTML = `
         <header class="view-header">
             <h1>Budget & Økonomi</h1>
             <div class="header-actions">
-                <button id="toggle-edit-targets" class="btn-outline" ${currentTab === 'total' ? 'disabled title="Skal ændres på de individuelle faner"' : ''}>
+                <button id="toggle-edit-targets" class="btn-outline" ${currentTab === 'total' ? 'disabled' : ''}>
                     ${isEditingTargets ? 'Gem budgetmål' : 'Tilpas budgetmål'}
                 </button>
                 <div class="month-selector">
@@ -67,8 +53,8 @@ export async function renderBudget(container) {
 
         <div class="budget-overview">
             <div class="stat-card income"><label>Indtægter</label><div id="total-income">0 kr.</div></div>
-            <div class="stat-card expenses"><label>Udgifter (Penge ud)</label><div id="total-expenses">0 kr.</div></div>
-            <div class="stat-card assets"><label>Vækst (Afdrag)</label><div id="total-assets">0 kr.</div></div>
+            <div class="stat-card expenses"><label>Samlede Udgifter</label><div id="total-expenses">0 kr.</div></div>
+            <div class="stat-card assets"><label>Heraf Vækst (Info)</label><div id="total-assets">0 kr.</div></div>
             <div class="stat-card cashflow"><label>Penge tilbage</label><div id="total-balance">0 kr.</div></div>
         </div>
 
@@ -80,7 +66,6 @@ export async function renderBudget(container) {
             <div id="category-container" class="category-grid"></div>
         </section>
 
-        <!-- Modal til poster -->
         <div id="budget-modal" class="modal-overlay" style="display:none;">
             <div class="modal-card">
                 <h2 id="modal-title">Ny budgetpost</h2>
@@ -89,28 +74,20 @@ export async function renderBudget(container) {
                     <div class="input-row">
                         <div class="input-group"><label>Beløb</label><input type="number" id="post-amount" required></div>
                         <div class="input-group"><label>Type</label>
-                            <select id="post-type">
-                                <option value="income">Indtægt</option>
-                                <option value="expense" selected>Udgift</option>
-                            </select>
+                            <select id="post-type"><option value="income">Indtægt</option><option value="expense" selected>Udgift</option></select>
                         </div>
                     </div>
                     <div class="input-row">
                         <div class="input-group"><label>Kategori</label>
-                            <select id="post-category">
-                                ${Object.keys(activeCategories).map(k => `<option value="${k}">${activeCategories[k].name}</option>`).join('')}
-                            </select>
+                            <select id="post-category">${Object.keys(activeCategories).map(k => `<option value="${k}">${activeCategories[k].name}</option>`).join('')}</select>
                         </div>
                         <div class="input-group"><label>Ejer</label>
-                            <select id="post-owner">
-                                <option value="user1">Mig</option><option value="user2">Kæreste</option><option value="shared">Fælles (50/50)</option>
-                            </select>
+                            <select id="post-owner"><option value="user1">Mig</option><option value="user2">Kæreste</option><option value="shared">Fælles (50/50)</option></select>
                         </div>
                     </div>
                     <div class="checkbox-group"><input type="checkbox" id="post-recurring" checked><label>Løbende post</label></div>
                     <div class="modal-buttons">
-                        <button type="button" id="cancel-btn" class="btn-text">Annuller</button>
-                        <button type="submit" class="btn-submit">Gem post</button>
+                        <button type="button" id="cancel-btn" class="btn-text">Annuller</button><button type="submit" class="btn-submit">Gem post</button>
                     </div>
                 </form>
             </div>
@@ -124,93 +101,70 @@ async function updateDisplay() {
     const container = document.getElementById('category-container');
     if (!container) return;
 
-    const posts = await getBudgetPosts();
-    const loans = await getLoans();
-    let inc = 0, exp = 0, princ = 0;
+    const posts = await getBudgetPosts(), loans = await getLoans();
+    let totalInc = 0, totalExp = 0, totalGrowth = 0;
     
     const catData = {};
     Object.keys(activeCategories).forEach(k => catData[k] = { actual: 0, items: [] });
 
-    // Fordel manuelle poster
     posts.forEach(p => {
         if (selectedMonth < p.startDate || (p.endDate && selectedMonth > p.endDate)) return;
         const isUser = currentTab !== 'total';
         if (isUser && p.owner !== currentTab && p.owner !== 'shared') return;
-        
-        let m = (isUser && p.owner === 'shared') ? 0.5 : 1;
-        let amt = p.amount * m;
+        let m = (isUser && p.owner === 'shared') ? 0.5 : 1, amt = p.amount * m;
         
         if (p.type === 'income') {
-            inc += amt;
-            // Indtægter lander altid i indtægtskategorien
+            totalInc += amt;
             catData['indtægter'].actual += amt;
             catData['indtægter'].items.push({ ...p, displayAmount: amt });
         } else {
-            exp += amt;
+            totalExp += amt;
+            // Hvis det er lagt i opsparingskategorien, tæller vi det som vækst
+            if (p.category === 'opsparing') totalGrowth += amt;
             const cat = p.category || 'ovrige';
-            if (catData[cat]) {
-                catData[cat].actual += amt;
-                catData[cat].items.push({ ...p, displayAmount: amt });
-            }
+            if (catData[cat]) { catData[cat].actual += amt; catData[cat].items.push({ ...p, displayAmount: amt }); }
         }
     });
 
-    // Fordel automatiske lån-poster
     loans.forEach(l => {
         const isUser = currentTab !== 'total';
         if (isUser && l.owner !== currentTab && l.owner !== 'shared') return;
-        
         const c = calculateLoanForMonth(l, selectedMonth);
         if (c) {
             let m = (isUser && l.owner === 'shared') ? 0.5 : 1;
-            const r = c.interest * m;
-            const a = c.principalPaid * m;
-            exp += r; princ += a;
+            const interest = c.interest * m, principal = c.principalPaid * m;
             
-            // Intelligent kategorisering af lån
-            const isTransport = l.name.toLowerCase().includes('bil');
-            const catKey = isTransport ? 'transport' : 'faste';
+            // Hele ydelsen forlader kontoen og er derfor en udgift i cashflow-forstand
+            totalExp += (interest + principal);
+            totalGrowth += principal;
             
+            const catKey = l.name.toLowerCase().includes('bil') ? 'transport' : 'faste';
             if (catData[catKey]) {
-                catData[catKey].actual += (r + a);
-                catData[catKey].items.push({ title: l.name + " (Rente)", displayAmount: r, isAuto: true });
-                catData[catKey].items.push({ title: l.name + " (Afdrag)", displayAmount: a, isAuto: true, isPrincipal: true });
+                catData[catKey].actual += (interest + principal);
+                catData[catKey].items.push({ title: l.name + " (Rente)", displayAmount: interest, isAuto: true });
+                catData[catKey].items.push({ title: l.name + " (Afdrag)", displayAmount: principal, isAuto: true, isPrincipal: true });
             }
         }
     });
 
-    // Render kategorikortene
     container.innerHTML = Object.keys(activeCategories).map(k => {
-        const cat = activeCategories[k];
-        const data = catData[k];
-        const pct = Math.min(100, (data.actual / cat.target) * 100);
-        
+        const cat = activeCategories[k], data = catData[k], pct = Math.min(100, (data.actual / cat.target) * 100);
         return `
             <div class="category-card">
-                <div class="cat-header">
-                    <h4>${cat.name}</h4>
-                    ${isEditingTargets ? 
-                        `<input type="number" class="target-input" data-cat="${k}" value="${cat.target}">` : 
-                        `<span>${Math.round(data.actual).toLocaleString()} / ${cat.target.toLocaleString()} kr.</span>`
-                    }
+                <div class="cat-header"><h4>${cat.name}</h4>
+                    ${isEditingTargets ? `<input type="number" class="target-input" data-cat="${k}" value="${cat.target}">` : `<span>${Math.round(data.actual).toLocaleString()} / ${cat.target.toLocaleString()} kr.</span>`}
                 </div>
-                <div class="progress-bar"><div class="progress-fill ${pct > 95 ? 'warning' : ''}" style="width: ${pct}%"></div></div>
+                <div class="progress-bar"><div class="progress-fill ${pct > 95 && k !== 'indtægter' ? 'warning' : ''}" style="width: ${pct}%"></div></div>
                 <ul class="cat-items">
-                    ${data.items.map(item => `
-                        <li class="small-item ${item.isAuto ? 'auto-item' : ''} ${item.isPrincipal ? 'principal-item' : ''}">
-                            <span>${item.title}</span>
-                            <span>${Math.round(item.displayAmount).toLocaleString()} kr. ${!item.isAuto ? `<button class="btn-edit-small" data-edit="${item.id}">✎</button>` : ''}</span>
-                        </li>
-                    `).join('')}
+                    ${data.items.map(item => `<li class="small-item ${item.isAuto ? 'auto-item' : ''} ${item.isPrincipal ? 'principal-item' : ''}"><span>${item.title}</span><span>${Math.round(item.displayAmount).toLocaleString()} kr. ${!item.isAuto ? `<button class="btn-edit-small" data-edit="${item.id}">✎</button>` : ''}</span></li>`).join('')}
                 </ul>
-            </div>
-        `;
+            </div>`;
     }).join('');
 
-    document.getElementById('total-income').innerText = Math.round(inc).toLocaleString() + ' kr.';
-    document.getElementById('total-expenses').innerText = Math.round(exp).toLocaleString() + ' kr.';
-    document.getElementById('total-assets').innerText = Math.round(princ).toLocaleString() + ' kr.';
-    document.getElementById('total-balance').innerText = Math.round(inc - exp - princ).toLocaleString() + ' kr.';
+    document.getElementById('total-income').innerText = Math.round(totalInc).toLocaleString() + ' kr.';
+    document.getElementById('total-expenses').innerText = Math.round(totalExp).toLocaleString() + ' kr.';
+    document.getElementById('total-assets').innerText = Math.round(totalGrowth).toLocaleString() + ' kr.';
+    document.getElementById('total-balance').innerText = Math.round(totalInc - totalExp).toLocaleString() + ' kr.';
 
     setupItemEvents(container, posts);
 }
@@ -218,66 +172,34 @@ async function updateDisplay() {
 function setupEvents(container) {
     document.getElementById('prev-month').onclick = () => { let d = new Date(selectedMonth+"-01"); d.setMonth(d.getMonth()-1); selectedMonth = d.toISOString().slice(0,7); renderBudget(container); };
     document.getElementById('next-month').onclick = () => { let d = new Date(selectedMonth+"-01"); d.setMonth(d.getMonth()+1); selectedMonth = d.toISOString().slice(0,7); renderBudget(container); };
-    
-    container.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { 
-        currentTab = b.dataset.tab; 
-        isEditingTargets = false; 
-        renderBudget(container); 
-    });
-    
+    container.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { currentTab = b.dataset.tab; isEditingTargets = false; renderBudget(container); });
     const editBtn = document.getElementById('toggle-edit-targets');
     if (editBtn) editBtn.onclick = async () => {
         if (isEditingTargets) {
-            const inputs = container.querySelectorAll('.target-input');
             const newTargets = {};
-            inputs.forEach(input => {
-                const cat = input.dataset.cat;
-                const val = parseFloat(input.value) || 0;
-                newTargets[cat] = { target: val };
-            });
+            container.querySelectorAll('.target-input').forEach(i => newTargets[i.dataset.cat] = { target: parseFloat(i.value) || 0 });
             await saveBudgetTargets(currentTab, newTargets);
         }
-        isEditingTargets = !isEditingTargets;
-        renderBudget(container);
+        isEditingTargets = !isEditingTargets; renderBudget(container);
     };
-
-    document.getElementById('open-modal-btn').onclick = () => { editingPostId = null; document.getElementById('budget-form').reset(); document.getElementById('modal-title').innerText = "Ny budgetpost"; document.getElementById('budget-modal').style.display = 'flex'; };
+    document.getElementById('open-modal-btn').onclick = () => { editingPostId = null; document.getElementById('budget-form').reset(); document.getElementById('budget-modal').style.display = 'flex'; };
     document.getElementById('cancel-btn').onclick = () => document.getElementById('budget-modal').style.display = 'none';
-
     document.getElementById('budget-form').onsubmit = async (e) => {
         e.preventDefault();
-        const data = {
-            title: document.getElementById('post-title').value,
-            amount: parseFloat(document.getElementById('post-amount').value),
-            type: document.getElementById('post-type').value,
-            category: document.getElementById('post-category').value,
-            owner: document.getElementById('post-owner').value,
-            isRecurring: document.getElementById('post-recurring').checked,
-            startDate: selectedMonth
-        };
+        const data = { title: document.getElementById('post-title').value, amount: parseFloat(document.getElementById('post-amount').value), type: document.getElementById('post-type').value, category: document.getElementById('post-category').value, owner: document.getElementById('post-owner').value, isRecurring: document.getElementById('post-recurring').checked, startDate: selectedMonth };
         if (editingPostId) await updateBudgetPost(editingPostId, data); else await addBudgetPost(data);
-        document.getElementById('budget-modal').style.display = 'none';
-        updateDisplay();
+        document.getElementById('budget-modal').style.display = 'none'; updateDisplay();
     };
 }
 
 function setupItemEvents(container, posts) {
     container.querySelectorAll('[data-edit]').forEach(btn => {
         btn.onclick = (e) => {
-            e.stopPropagation();
-            const item = posts.find(p => p.id === btn.dataset.edit);
-            if (!item) return;
-            editingPostId = item.id;
-            document.getElementById('modal-title').innerText = "Rediger post";
-            document.getElementById('post-title').value = item.title;
-            document.getElementById('post-amount').value = item.amount;
-            document.getElementById('post-type').value = item.type;
-            document.getElementById('post-category').value = item.category || 'ovrige';
-            document.getElementById('post-owner').value = item.owner;
-            document.getElementById('post-recurring').checked = item.isRecurring;
-            document.getElementById('budget-modal').style.display = 'flex';
+            e.stopPropagation(); const item = posts.find(p => p.id === btn.dataset.edit); if (!item) return;
+            editingPostId = item.id; document.getElementById('modal-title').innerText = "Rediger post"; document.getElementById('post-title').value = item.title; document.getElementById('post-amount').value = item.amount;
+            document.getElementById('post-type').value = item.type; document.getElementById('post-category').value = item.category || 'ovrige'; document.getElementById('post-owner').value = item.owner;
+            document.getElementById('post-recurring').checked = item.isRecurring; document.getElementById('budget-modal').style.display = 'flex';
         };
     });
 }
-
 function formatMonth(m) { return new Date(m + "-01").toLocaleDateString('da-DK', { month: 'long', year: 'numeric' }); }
