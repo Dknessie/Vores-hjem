@@ -33,7 +33,6 @@ export async function deleteBudgetPost(id) {
     } catch (e) { console.error(e); }
 }
 
-// Nye funktioner til budgetmål
 export async function saveBudgetTargets(targets) {
     try {
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
