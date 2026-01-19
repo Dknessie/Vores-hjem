@@ -44,36 +44,6 @@ button {
     transition: var(--transition);
 }
 
-/* --- LOGIN SKÆRM --- */
-.login-container {
-    height: 80vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.login-card {
-    background: white;
-    padding: 3rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-}
-
-.login-header { margin-bottom: 2.5rem; }
-.login-header p { color: var(--text-light); font-size: 0.9rem; }
-
-.error-msg {
-    background: #fff1f1;
-    color: var(--danger-bright);
-    padding: 0.8rem;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    margin-bottom: 1.5rem;
-}
-
 /* --- NAVIGATION --- */
 #main-nav {
     background-color: var(--primary-green);
@@ -115,7 +85,7 @@ button {
     padding: 0 1.5rem;
 }
 
-/* --- SHARED HEADER & SELECTORS --- */
+/* --- VIEW HEADER --- */
 .view-header {
     display: flex;
     justify-content: space-between;
@@ -142,32 +112,27 @@ button {
     text-align: center;
     font-weight: 700;
     color: var(--wood-brown);
-    font-size: 1.1rem;
-    text-transform: capitalize;
 }
 
 .btn-icon {
     background: var(--bg-color);
-    color: var(--wood-brown);
     width: 44px;
     height: 44px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
 
 .btn-icon:hover { background: var(--accent-blue); color: white; }
 
-/* --- TAB CONTROL --- */
+/* --- TABS --- */
 .tab-control {
     display: flex;
     background: #e9e8e0;
     padding: 0.4rem;
     border-radius: 50px;
     margin-bottom: 2.5rem;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .tab-btn {
@@ -185,15 +150,17 @@ button {
     box-shadow: var(--shadow);
 }
 
-/* --- STAT CARDS & OVERVIEW --- */
-.budget-overview {
+/* --- DASHBOARDS & STAT CARDS --- */
+.budget-overview, .net-worth-dashboard {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1.2rem;
     margin-bottom: 3rem;
 }
 
-.stat-card {
+.net-worth-dashboard { grid-template-columns: 1.6fr 1fr; }
+
+.stat-card, .mini-stat {
     background: white;
     padding: 1.8rem;
     border-radius: var(--border-radius);
@@ -201,111 +168,18 @@ button {
     text-align: center;
 }
 
-.stat-card label {
+.stat-card label, .mini-stat label {
     display: block;
     font-size: 0.75rem;
     text-transform: uppercase;
     color: var(--text-light);
-    margin-bottom: 0.6rem;
     font-weight: 700;
+    margin-bottom: 0.5rem;
 }
 
-.stat-card div { font-size: 1.5rem; font-weight: 800; }
-.stat-card.income div { color: var(--success-green); }
-.stat-card.expenses div { color: var(--danger-red); }
-.stat-card.assets div { color: var(--primary-green); }
-
-/* --- GRID LAYOUT FOR KATEGORIER --- */
-.category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.5rem;
-}
-
-.category-card {
-    background: white;
-    padding: 2rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    border-top: 5px solid var(--primary-green);
-}
-
-.cat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.2rem;
-}
-
-.target-input {
-    width: 100px;
-    padding: 4px 8px;
-    border-radius: 8px;
-    border: 2px solid var(--primary-green);
-    font-weight: 700;
-    text-align: right;
-    background: #fdfdfa;
-}
-
-.progress-bar {
-    height: 12px;
-    background: #f0f0f0;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-}
-
-.progress-fill {
-    height: 100%;
-    background: var(--success-green);
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.progress-fill.warning { background: var(--danger-red); }
-
-/* --- LIST ITEMS (Ensartet klikbar stil) --- */
-.cat-items { list-style: none; }
-
-.small-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.9rem 0.6rem;
-    border-bottom: 1px solid #f9f9f9;
-    font-size: 0.9rem;
-    color: var(--text-main);
-    align-items: center;
-    border-radius: 8px;
-    transition: var(--transition);
-}
-
-.clickable-post:hover, .clickable-asset:hover, .clickable-loan:hover {
-    background: #f4f7f5;
-    cursor: pointer;
-    transform: scale(1.01);
-}
-
-.item-info { display: flex; align-items: center; gap: 10px; }
-
-.auto-item, .principal-item { font-style: italic; color: var(--text-light); }
-.principal-item { color: var(--primary-green); }
-
-/* --- SECTION BAR MODERN --- */
-.section-bar-modern {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 2.5rem 0 2rem 0;
-}
-
-.action-group { display: flex; gap: 1.2rem; }
-
-/* --- ASSETS & NET WORTH DASHBOARD --- */
-.net-worth-dashboard {
-    display: grid;
-    grid-template-columns: 1.6fr 1fr;
-    gap: 2rem;
-    margin-bottom: 3rem;
-}
+.stat-card div, .mini-stat .val { font-size: 1.5rem; font-weight: 800; }
+.val.positive { color: var(--success-green); }
+.val.negative { color: var(--danger-bright); }
 
 .main-debt-card {
     background: var(--accent-blue);
@@ -316,41 +190,26 @@ button {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    text-align: left;
+    transition: var(--transition);
 }
+
+.main-debt-card.focused {
+    border: 4px solid var(--primary-green);
+    box-shadow: 0 0 30px rgba(62, 92, 74, 0.4);
+}
+
+.debt-value { font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; line-height: 1.1; }
 
 .equity-split {
     display: flex;
-    gap: 2rem;
+    gap: 1.5rem;
     margin-top: 1rem;
     opacity: 0.8;
     font-size: 0.9rem;
 }
 
-.debt-value { font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; }
-
-.debt-stats-grid { display: flex; flex-direction: column; gap: 1.2rem; }
-
-.mini-stat {
-    background: white;
-    padding: 1.8rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-}
-
-.mini-stat label {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--text-light);
-    text-transform: uppercase;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.mini-stat .val { font-size: 1.6rem; font-weight: 800; }
-.val.positive { color: var(--success-green); }
-.val.negative { color: var(--danger-red); }
-
-/* --- GRID FOR FORMUE & GÆLD KORT --- */
+/* --- GRID LAYOUT FOR KORT --- */
 .loan-cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -370,11 +229,34 @@ button {
     transition: var(--transition);
 }
 
-.loan-summary-card.active { border-color: var(--primary-green); background: #fdfdfa; }
-.asset-card { border-left: 6px solid var(--accent-blue); }
+.loan-summary-card.asset-card { border-left: 6px solid var(--accent-blue); }
+
+.loan-summary-card:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-5px);
+    cursor: pointer;
+}
+
+.loan-summary-card.active {
+    border-color: var(--primary-green);
+    background: #fdfdfa;
+}
 
 .loan-card-info h4 { color: var(--wood-brown); margin-bottom: 2px; }
-.loan-card-info p { font-size: 0.8rem; color: var(--text-light); }
+.loan-card-info p, .loan-card-info small { font-size: 0.8rem; color: var(--text-light); }
+
+.loan-card-meta {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card-btn-group {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
 
 /* --- SIMULATOR & DETAIL BOXES --- */
 .simulator-box, .loan-detail-box {
@@ -386,6 +268,15 @@ button {
     animation: slideDown 0.4s ease-out;
 }
 
+.loan-detail-box { border-color: var(--sim-color); }
+
+.sim-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
 .sim-controls {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -393,17 +284,18 @@ button {
     align-items: center;
 }
 
-#sim-months-slider, #rate-slider {
-    width: 100%;
-    height: 8px;
-    accent-color: var(--sim-color);
-    background: #cbd5e0;
-    border-radius: 10px;
+.saved-badge {
+    background: var(--success-green);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
 }
 
 .val-large { font-size: 1.8rem; font-weight: 800; color: var(--sim-color); }
 
-/* --- MODALS (Den flotte boks rundt om formularer) --- */
+/* --- MODALS --- */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -420,7 +312,7 @@ button {
     padding: 3rem;
     border-radius: 28px;
     width: 95%;
-    max-width: 550px;
+    max-width: 600px;
     box-shadow: 0 25px 60px rgba(0,0,0,0.15);
     animation: slideDown 0.3s ease-out;
 }
@@ -450,7 +342,7 @@ button {
     gap: 1.2rem;
 }
 
-/* --- BUTTONS --- */
+/* --- KNAPPER --- */
 .btn-add, .btn-submit {
     background: var(--primary-green);
     color: white;
@@ -479,6 +371,21 @@ button {
     font-size: 0.9rem;
 }
 
+.btn-edit-minimal, .btn-del-minimal {
+    background: #f8fbf9;
+    color: #cbd5e0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.btn-edit-minimal:hover { color: var(--accent-blue); background: #eef2f4; }
+.btn-del-minimal:hover { color: var(--danger-bright); background: #fff1f1; }
+
 .btn-outline {
     background: transparent;
     border: 2px solid var(--primary-green);
@@ -488,6 +395,16 @@ button {
     font-weight: 600;
 }
 
+.btn-small-white { 
+    background: rgba(255,255,255,0.2); 
+    color: white; 
+    padding: 6px 16px; 
+    border-radius: 50px; 
+    font-size: 0.75rem; 
+    margin-top: 15px; 
+    width: fit-content;
+}
+
 /* --- ANIMATIONS --- */
 @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -495,4 +412,9 @@ button {
 @media (max-width: 900px) {
     .net-worth-dashboard, .sim-controls { grid-template-columns: 1fr; }
     .debt-value { font-size: 2.8rem; }
+}
+
+@media (max-width: 600px) {
+    #main-nav { flex-direction: column; gap: 1rem; padding: 1rem; }
+    .nav-links { gap: 1rem; font-size: 0.85rem; }
 }
