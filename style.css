@@ -8,7 +8,7 @@
     --text-main: #2e2e2e;         /* Næsten sort til læsbarhed */
     --text-light: #767676;        /* Grålig tekst til detaljer */
     --success-green: #2d6a4f;     /* Frisk grøn til indtægter/vækst */
-    --danger-red: #bc6c25;        /* Varm brændt orange til udgifter/tab */
+    --danger-red: #bc6c25;        /* Varm brændt orange til advarsler */
     --danger-bright: #e53e3e;     /* Klar rød til destruktive handlinger */
     --sim-color: #5c7c8a;         /* Speciel blå til simulator-elementer */
     --shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
@@ -44,11 +44,6 @@ button {
     transition: var(--transition);
 }
 
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
 /* --- LOGIN SKÆRM --- */
 .login-container {
     height: 80vh;
@@ -64,12 +59,11 @@ button:disabled {
     box-shadow: var(--shadow);
     width: 100%;
     max-width: 400px;
+    text-align: center;
 }
 
-.login-header {
-    text-align: center;
-    margin-bottom: 2.5rem;
-}
+.login-header { margin-bottom: 2.5rem; }
+.login-header p { color: var(--text-light); font-size: 0.9rem; }
 
 .error-msg {
     background: #fff1f1;
@@ -78,7 +72,6 @@ button:disabled {
     border-radius: 10px;
     font-size: 0.85rem;
     margin-bottom: 1.5rem;
-    text-align: center;
 }
 
 /* --- NAVIGATION --- */
@@ -95,12 +88,7 @@ button:disabled {
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.logo {
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    cursor: pointer;
-}
+.logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
 
 .nav-links {
     list-style: none;
@@ -109,21 +97,15 @@ button:disabled {
     align-items: center;
 }
 
-.nav-links li {
-    font-weight: 500;
-    opacity: 0.8;
-    cursor: pointer;
-}
-
-.nav-links li:hover {
-    opacity: 1;
-}
+.nav-links li { font-weight: 500; opacity: 0.8; cursor: pointer; }
+.nav-links li:hover { opacity: 1; }
 
 #logout-btn {
     background: rgba(255,255,255,0.1);
     padding: 6px 15px;
     border-radius: 8px;
     font-size: 0.85rem;
+    color: #ffdada;
 }
 
 /* --- LAYOUT CONTAINER --- */
@@ -131,47 +113,6 @@ button:disabled {
     max-width: 1100px;
     margin: 3rem auto;
     padding: 0 1.5rem;
-}
-
-/* --- DASHBOARD --- */
-.dashboard-header {
-    margin-bottom: 3.5rem;
-    border-left: 6px solid var(--accent-blue);
-    padding-left: 1.5rem;
-}
-
-.dashboard-header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.2rem;
-}
-
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 2rem;
-}
-
-.card {
-    background: var(--card-bg);
-    padding: 3.5rem 2rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    text-align: center;
-    transition: var(--transition);
-    cursor: pointer;
-    border: 1px solid rgba(0,0,0,0.02);
-}
-
-.card:hover {
-    transform: translateY(-12px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-    border-color: var(--accent-blue);
-}
-
-.card-icon {
-    font-size: 3.5rem;
-    margin-bottom: 1.5rem;
-    display: block;
 }
 
 /* --- SHARED HEADER & SELECTORS --- */
@@ -184,11 +125,7 @@ button:disabled {
     gap: 1.5rem;
 }
 
-.header-actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
+.header-actions { display: flex; gap: 1rem; align-items: center; }
 
 .month-selector {
     display: flex;
@@ -220,6 +157,8 @@ button:disabled {
     align-items: center;
     box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
+
+.btn-icon:hover { background: var(--accent-blue); color: white; }
 
 /* --- TAB CONTROL --- */
 .tab-control {
@@ -271,16 +210,12 @@ button:disabled {
     font-weight: 700;
 }
 
-.stat-card div {
-    font-size: 1.5rem;
-    font-weight: 800;
-}
-
+.stat-card div { font-size: 1.5rem; font-weight: 800; }
 .stat-card.income div { color: var(--success-green); }
 .stat-card.expenses div { color: var(--danger-red); }
 .stat-card.assets div { color: var(--primary-green); }
 
-/* --- BUDGET KATEGORI & STATUS BARER --- */
+/* --- GRID LAYOUT FOR KATEGORIER --- */
 .category-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -326,14 +261,10 @@ button:disabled {
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.progress-fill.warning {
-    background: var(--danger-red);
-}
+.progress-fill.warning { background: var(--danger-red); }
 
-/* --- BUDGET LIST ITEMS --- */
-.cat-items {
-    list-style: none;
-}
+/* --- LIST ITEMS (Ensartet klikbar stil) --- */
+.cat-items { list-style: none; }
 
 .small-item {
     display: flex;
@@ -347,49 +278,16 @@ button:disabled {
     transition: var(--transition);
 }
 
-.small-item.clickable-post:hover {
-    background: #f8fbf9;
+.clickable-post:hover, .clickable-asset:hover, .clickable-loan:hover {
+    background: #f4f7f5;
     cursor: pointer;
+    transform: scale(1.01);
 }
 
-.item-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+.item-info { display: flex; align-items: center; gap: 10px; }
 
-.item-actions-group {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: 700;
-}
-
-.btn-toggle-sim {
-    background: none;
-    font-size: 1.1rem;
-    opacity: 0.6;
-}
-
-.item-disabled {
-    opacity: 0.4;
-    text-decoration: line-through;
-}
-
-.ghost-item {
-    border-left: 3px solid var(--sim-color);
-    padding-left: 10px;
-    background: #f4f8fa;
-}
-
-.auto-item, .principal-item {
-    font-style: italic;
-    color: var(--text-light);
-}
-
-.principal-item {
-    color: var(--primary-green);
-}
+.auto-item, .principal-item { font-style: italic; color: var(--text-light); }
+.principal-item { color: var(--primary-green); }
 
 /* --- SECTION BAR MODERN --- */
 .section-bar-modern {
@@ -399,12 +297,9 @@ button:disabled {
     margin: 2.5rem 0 2rem 0;
 }
 
-.action-group {
-    display: flex;
-    gap: 1.2rem;
-}
+.action-group { display: flex; gap: 1.2rem; }
 
-/* --- ASSETS & NET WORTH DASHBOARD (GITTER) --- */
+/* --- ASSETS & NET WORTH DASHBOARD --- */
 .net-worth-dashboard {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
@@ -423,8 +318,6 @@ button:disabled {
     justify-content: center;
 }
 
-.main-debt-card.focused { border: 4px solid var(--primary-green); }
-
 .equity-split {
     display: flex;
     gap: 2rem;
@@ -433,17 +326,9 @@ button:disabled {
     font-size: 0.9rem;
 }
 
-.debt-value {
-    font-size: 3.5rem;
-    font-weight: 800;
-    letter-spacing: -2px;
-}
+.debt-value { font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; }
 
-.debt-stats-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-}
+.debt-stats-grid { display: flex; flex-direction: column; gap: 1.2rem; }
 
 .mini-stat {
     background: white;
@@ -461,15 +346,11 @@ button:disabled {
     margin-bottom: 0.5rem;
 }
 
-.mini-stat .val {
-    font-size: 1.6rem;
-    font-weight: 800;
-}
-
+.mini-stat .val { font-size: 1.6rem; font-weight: 800; }
 .val.positive { color: var(--success-green); }
 .val.negative { color: var(--danger-red); }
 
-/* --- GRID LAYOUT FOR CARDS (FORMUE & GÆLD) --- */
+/* --- GRID FOR FORMUE & GÆLD KORT --- */
 .loan-cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -489,9 +370,11 @@ button:disabled {
     transition: var(--transition);
 }
 
-.loan-summary-card:hover { border-color: var(--accent-blue); transform: translateY(-5px); }
 .loan-summary-card.active { border-color: var(--primary-green); background: #fdfdfa; }
 .asset-card { border-left: 6px solid var(--accent-blue); }
+
+.loan-card-info h4 { color: var(--wood-brown); margin-bottom: 2px; }
+.loan-card-info p { font-size: 0.8rem; color: var(--text-light); }
 
 /* --- SIMULATOR & DETAIL BOXES --- */
 .simulator-box, .loan-detail-box {
@@ -518,24 +401,9 @@ button:disabled {
     border-radius: 10px;
 }
 
-.val-large {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: var(--sim-color);
-}
+.val-large { font-size: 1.8rem; font-weight: 800; color: var(--sim-color); }
 
-.sim-badge {
-    background: var(--sim-color);
-    color: white;
-    padding: 2px 10px;
-    border-radius: 6px;
-    font-size: 0.65rem;
-    font-weight: 900;
-    margin-left: 10px;
-    vertical-align: middle;
-}
-
-/* --- FORMS & MODALS --- */
+/* --- MODALS (Den flotte boks rundt om formularer) --- */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -554,6 +422,7 @@ button:disabled {
     width: 95%;
     max-width: 550px;
     box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+    animation: slideDown 0.3s ease-out;
 }
 
 .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
@@ -607,6 +476,7 @@ button:disabled {
     text-decoration: underline;
     background: none;
     text-align: left;
+    font-size: 0.9rem;
 }
 
 .btn-outline {
@@ -617,16 +487,6 @@ button:disabled {
     border-radius: 50px;
     font-weight: 600;
 }
-
-.btn-edit-minimal, .btn-del-minimal {
-    background: transparent;
-    color: #cbd5e0;
-    font-size: 1.2rem;
-    padding: 5px;
-}
-
-.btn-edit-minimal:hover { color: var(--accent-blue); }
-.btn-del-minimal:hover { color: var(--danger-bright); }
 
 /* --- ANIMATIONS --- */
 @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
