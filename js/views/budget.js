@@ -9,7 +9,7 @@ let isEditingTargets = false;
 // --- SIMULATOR STATE ---
 let isSimulationMode = false;
 let disabledItemIds = new Set();
-let ghostPosts = []; // Poster der kun findes i simulationen
+let ghostPosts = []; 
 
 let defaultCategories = {
     indtægter: { name: "Indtægter", target: 30000 },
@@ -42,7 +42,7 @@ export async function renderBudget(container) {
                 <button id="toggle-simulation" class="btn-outline ${isSimulationMode ? 'active-sim' : ''}">
                     ${isSimulationMode ? 'Stop Simulering' : 'Start Simulering'}
                 </button>
-                <button id="toggle-edit-targets" class="btn-outline" ${currentTab === 'total' ? 'disabled' : ''}>
+                <button id="toggle-edit-targets" class="btn-outline" ${currentTab === 'total' ? 'disabled title="Mål ændres på individuelle faner"' : ''}>
                     ${isEditingTargets ? 'Gem mål' : 'Tilpas mål'}
                 </button>
                 <div class="month-selector">
@@ -67,10 +67,10 @@ export async function renderBudget(container) {
         </div>
 
         <section class="budget-list-section">
-            <div class="section-bar">
-                <h3>Kategorier og Poster</h3>
-                <div>
-                    ${isSimulationMode ? '<button id="add-ghost-btn" class="btn-outline-small" style="margin-right:10px;">+ Simulation-post</button>' : ''}
+            <div class="section-bar-modern">
+                <h3>Forbrugs-kategorier</h3>
+                <div class="action-group">
+                    ${isSimulationMode ? '<button id="add-ghost-btn" class="btn-outline-small">+ Simulation-post</button>' : ''}
                     <button id="open-modal-btn" class="btn-add">+ Manuel post</button>
                 </div>
             </div>
@@ -119,7 +119,6 @@ async function updateDisplay() {
     const catData = {};
     Object.keys(activeCategories).forEach(k => catData[k] = { actual: 0, items: [] });
 
-    // Kombiner rigtige poster og ghost-poster (hvis i simulation)
     const allPosts = [...posts, ...(isSimulationMode ? ghostPosts : [])];
 
     allPosts.forEach(p => {
@@ -130,15 +129,10 @@ async function updateDisplay() {
         
         let m = (isUser && p.owner === 'shared') ? 0.5 : 1;
         let amt = p.amount * m;
-
-        // Simulator check: Er posten deaktiveret?
         const isDisabled = isSimulationMode && disabledItemIds.has(p.id);
 
         if (p.type === 'income') {
-            if (!isDisabled) {
-                totalInc += amt;
-                catData['indtægter'].actual += amt;
-            }
+            if (!isDisabled) { totalInc += amt; catData['indtægter'].actual += amt; }
             catData['indtægter'].items.push({ ...p, displayAmount: amt, isDisabled });
         } else {
             if (!isDisabled) {
@@ -161,11 +155,7 @@ async function updateDisplay() {
             const interest = c.interest * m, principal = c.principalPaid * m;
             const isDisabled = isSimulationMode && disabledItemIds.has(l.id);
             
-            if (!isDisabled) {
-                totalExp += (interest + principal);
-                totalGrowth += principal;
-            }
-            
+            if (!isDisabled) { totalExp += (interest + principal); totalGrowth += principal; }
             const catKey = l.name.toLowerCase().includes('bil') ? 'transport' : 'faste';
             if (catData[catKey]) {
                 if (!isDisabled) catData[catKey].actual += (interest + principal);
@@ -185,15 +175,18 @@ async function updateDisplay() {
                 <div class="progress-bar"><div class="progress-fill ${pct > 95 && k !== 'indtægter' ? 'warning' : ''}" style="width: ${pct}%"></div></div>
                 <ul class="cat-items">
                     ${data.items.map(item => `
-                        <li class="small-item ${item.isDisabled ? 'item-disabled' : ''} ${item.isGhost ? 'ghost-item' : ''}">
+                        <li class="small-item ${item.isDisabled ? 'item-disabled' : ''} ${item.isGhost ? 'ghost-item' : ''} ${item.isAuto ? 'auto-item' : ''}">
                             <div class="item-info">
-                                ${isSimulationMode ? `<button class="btn-toggle-sim" data-toggle-id="${item.id}">${item.isDisabled ? '👁‍🗨' : '👁'}</button>` : ''}
+                                ${isSimulationMode ? `<button class="btn-toggle-sim" data-toggle-id="${item.id}" title="Slå til/fra i simulation">${item.isDisabled ? '👁‍🗨' : '👁'}</button>` : ''}
                                 <span>${item.title}</span>
                             </div>
-                            <span>
-                                ${Math.round(item.displayAmount).toLocaleString()} kr. 
-                                ${!item.isAuto ? `<button class="btn-edit-small" data-edit="${item.id}" ${item.isGhost ? 'data-isghost="true"' : ''}>✎</button>` : ''}
-                            </span>
+                            <div class="item-actions-group">
+                                <span>${Math.round(item.displayAmount).toLocaleString()} kr.</span>
+                                ${!item.isAuto ? `
+                                    <button class="btn-edit-minimal" data-edit="${item.id}" ${item.isGhost ? 'data-isghost="true"' : ''}>✎</button>
+                                    <button class="btn-del-minimal" data-delete="${item.id}" ${item.isGhost ? 'data-isghost="true"' : ''}>✕</button>
+                                ` : ''}
+                            </div>
                         </li>`).join('')}
                 </ul>
             </div>`;
@@ -212,106 +205,57 @@ function setupEvents(container) {
     document.getElementById('next-month').onclick = () => { let d = new Date(selectedMonth+"-01"); d.setMonth(d.getMonth()+1); selectedMonth = d.toISOString().slice(0,7); renderBudget(container); };
     container.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { currentTab = b.dataset.tab; isEditingTargets = false; renderBudget(container); });
     
-    // Simulation Toggle
-    document.getElementById('toggle-simulation').onclick = () => {
-        isSimulationMode = !isSimulationMode;
-        if (!isSimulationMode) {
-            disabledItemIds.clear();
-            ghostPosts = [];
-        }
-        renderBudget(container);
-    };
+    document.getElementById('toggle-simulation').onclick = () => { isSimulationMode = !isSimulationMode; if (!isSimulationMode) { disabledItemIds.clear(); ghostPosts = []; } renderBudget(container); };
 
-    // Tilføj Ghost Post (Simulation)
     const addGhostBtn = document.getElementById('add-ghost-btn');
-    if (addGhostBtn) addGhostBtn.onclick = () => {
-        editingPostId = null;
-        document.getElementById('budget-form').reset();
-        document.getElementById('modal-title').innerText = "Ny Simulation-post";
-        document.getElementById('budget-modal').style.display = 'flex';
-        document.getElementById('budget-modal').dataset.ghost = "true";
-    };
+    if (addGhostBtn) addGhostBtn.onclick = () => { editingPostId = null; document.getElementById('budget-form').reset(); document.getElementById('modal-title').innerText = "Ny Simulation-post"; document.getElementById('budget-modal').style.display = 'flex'; document.getElementById('budget-modal').dataset.ghost = "true"; };
 
     const editBtn = document.getElementById('toggle-edit-targets');
     if (editBtn) editBtn.onclick = async () => {
         if (isEditingTargets) {
+            const inputs = container.querySelectorAll('.target-input');
             const newTargets = {};
-            container.querySelectorAll('.target-input').forEach(i => newTargets[i.dataset.cat] = { target: parseFloat(i.value) || 0 });
+            inputs.forEach(input => { newTargets[input.dataset.cat] = { target: parseFloat(input.value) || 0 }; });
             await saveBudgetTargets(currentTab, newTargets);
         }
         isEditingTargets = !isEditingTargets; renderBudget(container);
     };
 
-    document.getElementById('open-modal-btn').onclick = () => { 
-        editingPostId = null; 
-        document.getElementById('budget-form').reset(); 
-        document.getElementById('modal-title').innerText = "Ny budgetpost"; 
-        document.getElementById('budget-modal').style.display = 'flex'; 
-        delete document.getElementById('budget-modal').dataset.ghost;
-    };
-    
+    document.getElementById('open-modal-btn').onclick = () => { editingPostId = null; document.getElementById('budget-form').reset(); document.getElementById('modal-title').innerText = "Ny budgetpost"; document.getElementById('budget-modal').style.display = 'flex'; delete document.getElementById('budget-modal').dataset.ghost; };
     document.getElementById('cancel-btn').onclick = () => document.getElementById('budget-modal').style.display = 'none';
 
     document.getElementById('budget-form').onsubmit = async (e) => {
         e.preventDefault();
         const isGhost = document.getElementById('budget-modal').dataset.ghost === "true";
-        const data = { 
-            title: document.getElementById('post-title').value, 
-            amount: parseFloat(document.getElementById('post-amount').value), 
-            type: document.getElementById('post-type').value, 
-            category: document.getElementById('post-category').value, 
-            owner: document.getElementById('post-owner').value, 
-            isRecurring: document.getElementById('post-recurring').checked, 
-            startDate: selectedMonth,
-            isGhost: isGhost,
-            id: editingPostId || (isGhost ? 'ghost-' + Date.now() : null)
-        };
-
-        if (isGhost) {
-            if (editingPostId) {
-                const idx = ghostPosts.findIndex(p => p.id === editingPostId);
-                ghostPosts[idx] = data;
-            } else {
-                ghostPosts.push(data);
-            }
-        } else {
-            if (editingPostId) await updateBudgetPost(editingPostId, data); 
-            else await addBudgetPost(data);
-        }
-        
-        document.getElementById('budget-modal').style.display = 'none'; 
-        updateDisplay();
+        const data = { title: document.getElementById('post-title').value, amount: parseFloat(document.getElementById('post-amount').value), type: document.getElementById('post-type').value, category: document.getElementById('post-category').value, owner: document.getElementById('post-owner').value, isRecurring: document.getElementById('post-recurring').checked, startDate: selectedMonth, isGhost: isGhost, id: editingPostId || (isGhost ? 'ghost-' + Date.now() : null) };
+        if (isGhost) { if (editingPostId) { const idx = ghostPosts.findIndex(p => p.id === editingPostId); ghostPosts[idx] = data; } else { ghostPosts.push(data); } }
+        else { if (editingPostId) await updateBudgetPost(editingPostId, data); else await addBudgetPost(data); }
+        document.getElementById('budget-modal').style.display = 'none'; updateDisplay();
     };
 }
 
 function setupItemEvents(container, posts) {
-    // Toggle Simulator visibility
-    container.querySelectorAll('.btn-toggle-sim').forEach(btn => {
-        btn.onclick = () => {
-            const id = btn.dataset.toggleId;
-            if (disabledItemIds.has(id)) disabledItemIds.delete(id);
-            else disabledItemIds.add(id);
-            updateDisplay();
-        };
-    });
+    container.querySelectorAll('.btn-toggle-sim').forEach(btn => { btn.onclick = () => { const id = btn.dataset.toggleId; if (disabledItemIds.has(id)) disabledItemIds.delete(id); else disabledItemIds.add(id); updateDisplay(); }; });
 
     container.querySelectorAll('[data-edit]').forEach(btn => {
         btn.onclick = (e) => {
-            e.stopPropagation(); 
-            const isGhost = btn.dataset.isghost === "true";
+            e.stopPropagation(); const isGhost = btn.dataset.isghost === "true";
             const item = isGhost ? ghostPosts.find(p => p.id === btn.dataset.edit) : posts.find(p => p.id === btn.dataset.edit);
             if (!item) return;
-            
-            editingPostId = item.id; 
-            document.getElementById('modal-title').innerText = isGhost ? "Rediger Simulation" : "Rediger post"; 
-            document.getElementById('post-title').value = item.title; 
-            document.getElementById('post-amount').value = item.amount;
-            document.getElementById('post-type').value = item.type; 
-            document.getElementById('post-category').value = item.category || 'ovrige'; 
-            document.getElementById('post-owner').value = item.owner;
-            document.getElementById('post-recurring').checked = item.isRecurring; 
-            if (isGhost) document.getElementById('budget-modal').dataset.ghost = "true";
-            document.getElementById('budget-modal').style.display = 'flex';
+            editingPostId = item.id; document.getElementById('modal-title').innerText = isGhost ? "Rediger Simulation" : "Rediger post"; document.getElementById('post-title').value = item.title; document.getElementById('post-amount').value = item.amount;
+            document.getElementById('post-type').value = item.type; document.getElementById('post-category').value = item.category || 'ovrige'; document.getElementById('post-owner').value = item.owner;
+            document.getElementById('post-recurring').checked = item.isRecurring; if (isGhost) document.getElementById('budget-modal').dataset.ghost = "true"; document.getElementById('budget-modal').style.display = 'flex';
+        };
+    });
+
+    container.querySelectorAll('[data-delete]').forEach(btn => {
+        btn.onclick = async (e) => {
+            e.stopPropagation(); const isGhost = btn.dataset.isghost === "true";
+            if (confirm('Vil du slette denne post?')) {
+                if (isGhost) ghostPosts = ghostPosts.filter(p => p.id !== btn.dataset.delete);
+                else await deleteBudgetPost(btn.dataset.delete);
+                updateDisplay();
+            }
         };
     });
 }
