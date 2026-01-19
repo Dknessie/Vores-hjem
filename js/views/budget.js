@@ -6,7 +6,6 @@ let currentTab = 'total';
 let editingPostId = null;
 let isEditingTargets = false;
 
-// Standard malkategorier - opdateres fra DB hvis muligt
 let categories = {
     bolig: { name: "Bolig", target: 12000 },
     bil: { name: "Bil & Transport", target: 5000 },
@@ -113,16 +112,11 @@ async function updateDisplay() {
         if (isUser && p.owner !== currentTab && p.owner !== 'shared') return;
         let m = (isUser && p.owner === 'shared') ? 0.5 : 1;
         let amt = p.amount * m;
-        
-        if (p.type === 'income') {
-            inc += amt;
-        } else {
-            exp += amt;
-            const cat = p.category || 'andet';
-            if (catData[cat]) {
-                catData[cat].actual += amt;
-                catData[cat].items.push({ ...p, displayAmount: amt });
-            }
+        if (p.type === 'income') inc += amt; else exp += amt;
+        const cat = p.category || 'andet';
+        if (catData[cat]) {
+            catData[cat].actual += amt;
+            catData[cat].items.push({ ...p, displayAmount: amt });
         }
     });
 
@@ -135,10 +129,9 @@ async function updateDisplay() {
             const r = c.interest * m;
             const a = c.principalPaid * m;
             exp += r; princ += a;
-            
             const cat = l.name.toLowerCase().includes('bil') ? 'bil' : 'bolig';
             if (catData[cat]) {
-                catData[cat].actual += (r + a); // Vi tæller både rente og afdrag med i kategori-forbruget
+                catData[cat].actual += (r + a);
                 catData[cat].items.push({ title: l.name + " (Rente)", displayAmount: r, isAuto: true });
                 catData[cat].items.push({ title: l.name + " (Afdrag)", displayAmount: a, isAuto: true, isPrincipal: true });
             }
@@ -186,7 +179,6 @@ function setupEvents(container) {
     
     document.getElementById('toggle-edit-targets').onclick = async () => {
         if (isEditingTargets) {
-            // Gem mål
             const inputs = container.querySelectorAll('.target-input');
             const newTargets = {};
             inputs.forEach(input => {
@@ -201,7 +193,7 @@ function setupEvents(container) {
         renderBudget(container);
     };
 
-    document.getElementById('open-modal-btn').onclick = () => { editingPostId = null; document.getElementById('budget-form').reset(); document.getElementById('modal-title').innerText = "Ny budgetpost"; document.getElementById('budget-modal').style.display = 'flex'; };
+    document.getElementById('open-modal-btn').onclick = () => { editingPostId = null; document.getElementById('budget-form').reset(); document.getElementById('budget-modal').style.display = 'flex'; };
     document.getElementById('cancel-btn').onclick = () => document.getElementById('budget-modal').style.display = 'none';
 
     document.getElementById('budget-form').onsubmit = async (e) => {
@@ -215,8 +207,7 @@ function setupEvents(container) {
             isRecurring: document.getElementById('post-recurring').checked,
             startDate: selectedMonth
         };
-        if (editingPostId) await updateBudgetPost(editingPostId, data);
-        else await addBudgetPost(data);
+        if (editingPostId) await updateBudgetPost(editingPostId, data); else await addBudgetPost(data);
         document.getElementById('budget-modal').style.display = 'none';
         updateDisplay();
     };
