@@ -193,6 +193,7 @@ button {
     display: flex;
     justify-content: center;
     align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
 
 .btn-icon:hover {
@@ -260,8 +261,6 @@ button {
 .stat-card.assets div { color: var(--primary-green); }
 .stat-card.cashflow div { color: var(--text-main); }
 
-.danger-text { color: var(--danger-red) !important; }
-
 /* --- BUDGET KATEGORI & STATUS BARER --- */
 .category-grid {
     display: grid;
@@ -282,11 +281,6 @@ button {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.2rem;
-}
-
-.cat-header h4 {
-    font-size: 1.1rem;
-    color: var(--wood-brown);
 }
 
 .target-input {
@@ -335,7 +329,6 @@ button {
 .small-item span:first-child { font-weight: 500; }
 .small-item span:last-child { font-weight: 700; display: flex; align-items: center; gap: 8px; }
 
-/* Styling til afdragsposter i budgettet */
 .principal-item {
     font-style: italic;
     color: var(--primary-green);
@@ -418,14 +411,18 @@ button {
 .val.positive { color: var(--success-green); }
 .val.negative { color: var(--danger-red); }
 
-/* --- SIMULATOR STYLING --- */
-.simulator-box {
+/* --- SIMULATOR & DETAIL BOXES --- */
+.simulator-box, .loan-detail-box {
     background: #eef2f4;
     border: 2px solid #d1dee4;
     border-radius: var(--border-radius);
     padding: 2rem;
     margin-bottom: 2.5rem;
     animation: slideDown 0.4s ease-out;
+}
+
+.loan-detail-box {
+    border-color: var(--sim-color);
 }
 
 .sim-header {
@@ -436,35 +433,41 @@ button {
 }
 
 .sim-controls {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
     align-items: center;
-    gap: 2rem;
 }
 
-.sim-controls label { font-weight: 700; color: var(--sim-color); min-width: 140px; }
+.sim-controls label { font-weight: 700; color: var(--sim-color); display: block; margin-bottom: 8px; }
 
-#sim-months-slider {
-    flex-grow: 1;
+#sim-months-slider, #rate-slider {
+    width: 100%;
     height: 8px;
     accent-color: var(--sim-color);
     cursor: pointer;
+}
+
+.val-large {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--sim-color);
+}
+
+.badge-blue {
+    background: var(--sim-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
 }
 
 .btn-outline.active-sim {
     background: var(--sim-color);
     color: white;
     border-color: var(--sim-color);
-}
-
-.sim-badge {
-    background: var(--sim-color);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.65rem;
-    font-weight: 900;
-    margin-left: 8px;
-    text-transform: uppercase;
 }
 
 /* --- FORMS & DRAWERS --- */
@@ -554,7 +557,7 @@ button {
     background: #fdfdfa;
 }
 
-.asset-card { border-left: 5px solid var(--accent-blue); }
+.asset-card { border-left: 4px solid var(--accent-blue); }
 
 .loan-card-info h4 { color: var(--wood-brown); margin-bottom: 2px; }
 .loan-card-info small { color: var(--text-light); }
@@ -627,10 +630,8 @@ button {
 
 /* --- RESPONSIVITET --- */
 @media (max-width: 900px) {
-    .net-worth-dashboard { grid-template-columns: 1fr; }
+    .net-worth-dashboard, .sim-controls { grid-template-columns: 1fr; }
     .debt-value { font-size: 2.8rem; }
-    .sim-controls { flex-direction: column; align-items: flex-start; gap: 1rem; }
-    #sim-months-slider { width: 100%; }
 }
 
 @media (max-width: 600px) {
