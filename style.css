@@ -225,6 +225,43 @@ button {
     box-shadow: var(--shadow);
 }
 
+/* --- BUDGET OVERVIEW & STAT CARDS --- */
+.budget-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.8rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.stat-card label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 0.6rem;
+    font-weight: 700;
+}
+
+.stat-card div {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.stat-card.income div { color: var(--success-green); }
+.stat-card.expenses div { color: var(--danger-red); }
+.stat-card.assets div { color: var(--primary-green); }
+.stat-card.cashflow div { color: var(--text-main); }
+
+.danger-text { color: var(--danger-red) !important; }
+
 /* --- BUDGET KATEGORI & STATUS BARER --- */
 .category-grid {
     display: grid;
@@ -237,14 +274,14 @@ button {
     padding: 2rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
-    border-top: 4px solid var(--primary-green);
+    border-top: 5px solid var(--primary-green);
 }
 
 .cat-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
 }
 
 .cat-header h4 {
@@ -252,14 +289,18 @@ button {
     color: var(--wood-brown);
 }
 
-.cat-header span {
-    font-size: 0.85rem;
+.target-input {
+    width: 100px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 2px solid var(--primary-green);
     font-weight: 700;
-    color: var(--text-light);
+    font-family: inherit;
+    text-align: right;
 }
 
 .progress-bar {
-    height: 10px;
+    height: 12px;
     background: #f0f0f0;
     border-radius: 10px;
     overflow: hidden;
@@ -293,6 +334,18 @@ button {
 .small-item:last-child { border-bottom: none; }
 .small-item span:first-child { font-weight: 500; }
 .small-item span:last-child { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+/* Styling til afdragsposter i budgettet */
+.principal-item {
+    font-style: italic;
+    color: var(--primary-green);
+}
+
+.principal-item::before {
+    content: '↗';
+    margin-right: 5px;
+    font-weight: 800;
+}
 
 /* --- ASSETS & NET WORTH DASHBOARD --- */
 .net-worth-dashboard {
@@ -335,38 +388,11 @@ button {
     letter-spacing: -2px;
 }
 
-.budget-overview {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.debt-stats-grid {
+    display: flex;
+    flex-direction: column;
     gap: 1.2rem;
-    margin-bottom: 3rem;
 }
-
-.stat-card {
-    background: white;
-    padding: 1.8rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    text-align: center;
-}
-
-.stat-card label {
-    display: block;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: var(--text-light);
-    margin-bottom: 0.6rem;
-    font-weight: 700;
-}
-
-.stat-card div {
-    font-size: 1.5rem;
-    font-weight: 800;
-}
-
-.stat-card.income div { color: var(--success-green); }
-.stat-card.expenses div { color: var(--danger-red); }
-.stat-card.assets div { color: var(--primary-green); }
 
 .mini-stat {
     background: white;
@@ -528,7 +554,7 @@ button {
     background: #fdfdfa;
 }
 
-.asset-card { border-left: 4px solid var(--accent-blue); }
+.asset-card { border-left: 5px solid var(--accent-blue); }
 
 .loan-card-info h4 { color: var(--wood-brown); margin-bottom: 2px; }
 .loan-card-info small { color: var(--text-light); }
