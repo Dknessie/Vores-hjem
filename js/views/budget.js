@@ -77,7 +77,7 @@ export async function renderBudget(container) {
             <div id="category-container" class="category-grid"></div>
         </section>
 
-        <!-- FORM MODAL -->
+        <!-- MODAL TIL BUDGETPOSTER -->
         <div id="budget-modal" class="modal-overlay" style="display:none;">
             <div class="modal-card">
                 <h2 id="modal-title">Ny budgetpost</h2>
@@ -100,10 +100,10 @@ export async function renderBudget(container) {
                     <div class="checkbox-group"><input type="checkbox" id="post-recurring" checked><label>Løbende post</label></div>
                     
                     <div class="modal-buttons">
-                        <button type="button" id="delete-post-btn" class="btn-danger-text" style="display:none;">Slet post</button>
+                        <button type="button" id="delete-post-btn" class="btn-danger-text" style="display:none;">Slet denne post permanent</button>
                         <div class="main-modal-actions">
                             <button type="button" id="cancel-btn" class="btn-danger-outline">Annuller</button>
-                            <button type="submit" class="btn-submit">Gem post</button>
+                            <button type="submit" class="btn-submit">Gem ændringer</button>
                         </div>
                     </div>
                 </form>
@@ -237,14 +237,16 @@ function setupEvents(container) {
     
     document.getElementById('cancel-btn').onclick = () => document.getElementById('budget-modal').style.display = 'none';
 
-    // Slet funktion inde i modal
+    // Slet funktion inde i modal (Nu rettet så den fjerner korrekt)
     document.getElementById('delete-post-btn').onclick = async () => {
         if (!editingPostId) return;
         const isGhost = document.getElementById('budget-modal').dataset.ghost === "true";
         
         if (confirm('Er du sikker på, at du vil slette denne post?')) {
             if (isGhost) {
-                ghostPosts = ghostPosts.filter(p => p.id !== editingPostId);
+                // Konverterer til string for at være helt sikker på ID match
+                const idToMatch = String(editingPostId);
+                ghostPosts = ghostPosts.filter(p => String(p.id) !== idToMatch);
             } else {
                 await deleteBudgetPost(editingPostId);
             }
@@ -256,8 +258,18 @@ function setupEvents(container) {
     document.getElementById('budget-form').onsubmit = async (e) => {
         e.preventDefault();
         const isGhost = document.getElementById('budget-modal').dataset.ghost === "true";
-        const data = { title: document.getElementById('post-title').value, amount: parseFloat(document.getElementById('post-amount').value), type: document.getElementById('post-type').value, category: document.getElementById('post-category').value, owner: document.getElementById('post-owner').value, isRecurring: document.getElementById('post-recurring').checked, startDate: selectedMonth, isGhost: isGhost, id: editingPostId || (isGhost ? 'ghost-' + Date.now() : null) };
-        if (isGhost) { if (editingPostId) { const idx = ghostPosts.findIndex(p => p.id === editingPostId); ghostPosts[idx] = data; } else { ghostPosts.push(data); } }
+        const data = { 
+            title: document.getElementById('post-title').value, 
+            amount: parseFloat(document.getElementById('post-amount').value), 
+            type: document.getElementById('post-type').value, 
+            category: document.getElementById('post-category').value, 
+            owner: document.getElementById('post-owner').value, 
+            isRecurring: document.getElementById('post-recurring').checked, 
+            startDate: selectedMonth, 
+            isGhost: isGhost, 
+            id: editingPostId || (isGhost ? 'ghost-' + Date.now() : null) 
+        };
+        if (isGhost) { if (editingPostId) { const idx = ghostPosts.findIndex(p => String(p.id) === String(editingPostId)); ghostPosts[idx] = data; } else { ghostPosts.push(data); } }
         else { if (editingPostId) await updateBudgetPost(editingPostId, data); else await addBudgetPost(data); }
         document.getElementById('budget-modal').style.display = 'none'; updateDisplay();
     };
@@ -266,18 +278,13 @@ function setupEvents(container) {
 function setupItemEvents(container, posts) {
     container.querySelectorAll('.btn-toggle-sim').forEach(btn => { btn.onclick = (e) => { e.stopPropagation(); const id = btn.dataset.toggleId; if (disabledItemIds.has(id)) disabledItemIds.delete(id); else disabledItemIds.add(id); updateDisplay(); }; });
 
-    // Klik på selve linjen for at åbne modal
     container.querySelectorAll('.clickable-post').forEach(item => {
         item.onclick = () => {
-            const isAuto = item.dataset.isauto === "true";
-            if (isAuto) return; // Kan ikke redigere automatiske poster her
-
+            if (item.dataset.isauto === "true") return;
             const isGhost = item.dataset.isghost === "true";
             const id = item.dataset.id;
-            const data = isGhost ? ghostPosts.find(p => p.id === id) : posts.find(p => p.id === id);
-            
+            const data = isGhost ? ghostPosts.find(p => String(p.id) === String(id)) : posts.find(p => String(p.id) === String(id));
             if (!data) return;
-
             editingPostId = data.id;
             document.getElementById('modal-title').innerText = isGhost ? "Rediger Simulation" : "Rediger post";
             document.getElementById('post-title').value = data.title;
@@ -286,10 +293,7 @@ function setupItemEvents(container, posts) {
             document.getElementById('post-category').value = data.category || 'ovrige';
             document.getElementById('post-owner').value = data.owner;
             document.getElementById('post-recurring').checked = data.isRecurring;
-            
-            if (isGhost) document.getElementById('budget-modal').dataset.ghost = "true";
-            else delete document.getElementById('budget-modal').dataset.ghost;
-
+            if (isGhost) document.getElementById('budget-modal').dataset.ghost = "true"; else delete document.getElementById('budget-modal').dataset.ghost;
             document.getElementById('delete-post-btn').style.display = "block";
             document.getElementById('budget-modal').style.display = 'flex';
         };
