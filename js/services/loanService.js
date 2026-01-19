@@ -5,94 +5,80 @@ const LOAN_COLL = "loans";
 const ASSET_COLL = "assets";
 
 /**
- * Tilføjer et nyt lån til databasen
+ * LÅN OG AKTIV SERVICES
  */
-export async function addLoan(loanData) {
-    try {
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const { isGhost, ...saveData } = loanData; 
-        const docRef = await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL), saveData);
-        return docRef.id;
-    } catch (e) { console.error("Fejl ved tilføjelse af lån:", e); }
+export async function addLoan(data) {
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    return await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL), data);
 }
 
-/**
- * Opdaterer et eksisterende lån
- */
-export async function updateLoan(id, loanData) {
-    try {
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const { isGhost, ...saveData } = loanData;
-        await updateDoc(doc(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL, id), saveData);
-    } catch (e) { console.error("Fejl ved opdatering af lån:", e); }
+export async function updateLoan(id, data) {
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    return await updateDoc(doc(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL, id), data);
 }
 
-/**
- * Henter alle lån
- */
 export async function getLoans() {
-    try {
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const snap = await getDocs(collection(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL));
-        return snap.docs.map(doc => ({ id: doc.id, ...doc.data(), isGhost: false }));
-    } catch (e) { return []; }
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const snap = await getDocs(collection(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL));
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
-/**
- * Sletter et lån
- */
 export async function deleteLoan(id) {
-    try {
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        await deleteDoc(doc(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL, id));
-    } catch (e) { console.error("Fejl ved sletning af lån:", e); }
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    return await deleteDoc(doc(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL, id));
 }
 
-/**
- * Tilføjer et nyt aktiv (bil, hus etc.)
- */
-export async function addAsset(assetData) {
-    try {
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const docRef = await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL), assetData);
-        return docRef.id;
-    } catch (e) { console.error("Fejl ved tilføjelse af aktiv:", e); }
+export async function addAsset(data) {
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    return await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL), data);
 }
 
-/**
- * Henter alle aktiver
- */
+export async function updateAsset(id, data) {
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    return await updateDoc(doc(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL, id), data);
+}
+
 export async function getAssets() {
-    try {
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const snap = await getDocs(collection(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL));
-        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (e) { return []; }
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const snap = await getDocs(collection(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL));
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
-/**
- * Sletter et aktiv
- */
 export async function deleteAsset(id) {
-    try {
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        await deleteDoc(doc(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL, id));
-    } catch (e) { console.error("Fejl ved sletning af aktiv:", e); }
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    return await deleteDoc(doc(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL, id));
 }
 
 /**
- * Beregner lånets status for en specifik måned
+ * AVANCERET MATEMATIK TIL SIMULERING
  */
+
+// Beregner de samlede renteomkostninger for et lån med en given ydelse
+export function calculateTotalInterest(loan, monthlyPayment) {
+    let balance = loan.principal;
+    const monthlyRate = (loan.interestRate / 100) / 12;
+    let totalInterest = 0;
+    let safety = 0;
+    
+    while (balance > 0 && safety < 600) {
+        const interest = balance * monthlyRate;
+        const principal = monthlyPayment - interest;
+        if (principal <= 0) return Infinity; // Lånet bliver aldrig betalt ud
+        
+        totalInterest += interest;
+        balance -= principal;
+        safety++;
+    }
+    return totalInterest;
+}
+
 export function calculateLoanForMonth(loan, targetMonthStr) {
     const start = new Date(loan.startDate + "-01");
     const target = new Date(targetMonthStr + "-01");
-    
-    // Hvis vi kigger bagud i tiden før lånet startede
     if (target < start) return { interest: 0, principalPaid: 0, remainingBalance: loan.principal };
-
+    
     const monthsDiff = (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth());
     const monthlyRate = (loan.interestRate / 100) / 12;
-    
     let balance = loan.principal;
     let interest = 0, principalPaid = 0;
     
@@ -110,9 +96,6 @@ export function calculateLoanForMonth(loan, targetMonthStr) {
     return { interest, principalPaid, remainingBalance: Math.max(0, balance) };
 }
 
-/**
- * Finder den forventede slutdato for et lån
- */
 export function getLoanEndDate(loan) {
     let balance = loan.principal;
     let date = new Date(loan.startDate + "-01");
@@ -121,7 +104,7 @@ export function getLoanEndDate(loan) {
     while (balance > 0 && safety < 600) {
         let int = balance * monthlyRate;
         let princ = loan.monthlyPayment - int;
-        if (princ <= 0) return "Uendelig";
+        if (princ <= 0) return "Aldrig";
         balance -= princ;
         date.setMonth(date.getMonth() + 1);
         safety++;
