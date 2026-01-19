@@ -2,11 +2,10 @@ import { getBudgetPosts, addBudgetPost, deleteBudgetPost, updateBudgetPost, getB
 import { getLoans, calculateLoanForMonth } from "../services/loanService.js";
 
 let selectedMonth = new Date().toISOString().slice(0, 7);
-let currentTab = 'total'; // 'total', 'user1', 'user2'
+let currentTab = 'total'; 
 let editingPostId = null;
 let isEditingTargets = false;
 
-// Standard kategorier
 let defaultCategories = {
     bolig: { name: "Bolig", target: 12000 },
     bil: { name: "Bil & Transport", target: 5000 },
@@ -18,23 +17,38 @@ let defaultCategories = {
 let activeCategories = JSON.parse(JSON.stringify(defaultCategories));
 
 export async function renderBudget(container) {
-    // Hent individuelle targets for den valgte fane
-    const ownerKey = currentTab === 'total' ? 'shared' : currentTab;
-    const savedTargets = await getBudgetTargets(ownerKey);
-    
-    // Nulstil til default før vi påfører gemte data
-    activeCategories = JSON.parse(JSON.stringify(defaultCategories));
-    if (savedTargets) {
-        Object.keys(savedTargets).forEach(key => {
-            if (activeCategories[key]) activeCategories[key].target = savedTargets[key].target;
+    // Hvis vi er på Husstanden, henter vi alle 3 mål-dokumenter og lægger dem sammen
+    if (currentTab === 'total') {
+        const t1 = await getBudgetTargets('user1');
+        const t2 = await getBudgetTargets('user2');
+        const ts = await getBudgetTargets('shared');
+        
+        activeCategories = JSON.parse(JSON.stringify(defaultCategories));
+        Object.keys(activeCategories).forEach(key => {
+            let sum = 0;
+            if (t1 && t1[key]) sum += t1[key].target;
+            if (t2 && t2[key]) sum += t2[key].target;
+            if (ts && ts[key]) sum += ts[key].target;
+            // Hvis der ingen gemte data er, brug default. Ellers brug summen.
+            if (sum > 0) activeCategories[key].target = sum;
         });
+    } else {
+        const savedTargets = await getBudgetTargets(currentTab);
+        activeCategories = JSON.parse(JSON.stringify(defaultCategories));
+        if (savedTargets) {
+            Object.keys(savedTargets).forEach(key => {
+                if (activeCategories[key]) activeCategories[key].target = savedTargets[key].target;
+            });
+        }
     }
 
     container.innerHTML = `
         <header class="view-header">
             <h1>Budget & Økonomi</h1>
             <div class="header-actions">
-                <button id="toggle-edit-targets" class="btn-outline">${isEditingTargets ? 'Gem budgetmål' : 'Tilpas budgetmål'}</button>
+                <button id="toggle-edit-targets" class="btn-outline" ${currentTab === 'total' ? 'disabled title="Mål skal ændres på de individuelle faner"' : ''}>
+                    ${isEditingTargets ? 'Gem budgetmål' : 'Tilpas budgetmål'}
+                </button>
                 <div class="month-selector">
                     <button id="prev-month" class="btn-icon">←</button>
                     <span id="current-month-display" class="month-label">${formatMonth(selectedMonth)}</span>
@@ -45,7 +59,7 @@ export async function renderBudget(container) {
 
         <div class="tab-control">
             <button class="tab-btn ${currentTab === 'total' ? 'active' : ''}" data-tab="total">Husstanden</button>
-            <button class="tab-btn ${currentTab === 'user1' ? 'active' : ''}" data-tab="user1">Min Andel</button>
+            <button class="tab-btn ${currentTab === 'user1' ? 'active' : ''}" data-tab="user1">Mig</button>
             <button class="tab-btn ${currentTab === 'user2' ? 'active' : ''}" data-tab="user2">Kæresten</button>
         </div>
 
@@ -58,7 +72,7 @@ export async function renderBudget(container) {
 
         <section class="budget-list-section">
             <div class="section-bar">
-                <h3>Kategorier for ${currentTab === 'total' ? 'Husstanden' : (currentTab === 'user1' ? 'Mig' : 'Kæresten')}</h3>
+                <h3>Kategorier og Forbrug</h3>
                 <button id="open-modal-btn" class="btn-add">+ Manuel post</button>
             </div>
             <div id="category-container" class="category-grid"></div>
@@ -114,14 +128,12 @@ async function updateDisplay() {
     const catData = {};
     Object.keys(activeCategories).forEach(k => catData[k] = { actual: 0, items: [] });
 
-    // Håndter manuelle poster
     posts.forEach(p => {
         if (selectedMonth < p.startDate || (p.endDate && selectedMonth > p.endDate)) return;
         const isUser = currentTab !== 'total';
         if (isUser && p.owner !== currentTab && p.owner !== 'shared') return;
         let m = (isUser && p.owner === 'shared') ? 0.5 : 1;
         let amt = p.amount * m;
-        
         if (p.type === 'income') inc += amt; 
         else {
             exp += amt;
@@ -133,7 +145,6 @@ async function updateDisplay() {
         }
     });
 
-    // Håndter lån (renter og afdrag)
     loans.forEach(l => {
         const isUser = currentTab !== 'total';
         if (isUser && l.owner !== currentTab && l.owner !== 'shared') return;
@@ -143,7 +154,6 @@ async function updateDisplay() {
             const r = c.interest * m;
             const a = c.principalPaid * m;
             exp += r; princ += a;
-            
             const cat = l.name.toLowerCase().includes('bil') ? 'bil' : 'bolig';
             if (catData[cat]) {
                 catData[cat].actual += (r + a);
@@ -169,7 +179,7 @@ async function updateDisplay() {
                 <div class="progress-bar"><div class="progress-fill ${pct > 95 ? 'warning' : ''}" style="width: ${pct}%"></div></div>
                 <ul class="cat-items">
                     ${data.items.map(item => `
-                        <li class="small-item ${item.isPrincipal ? 'principal-item' : ''}">
+                        <li class="small-item ${item.isAuto ? 'auto-item' : ''} ${item.isPrincipal ? 'principal-item' : ''}">
                             <span>${item.title}</span>
                             <span>${Math.round(item.displayAmount).toLocaleString()} kr. ${!item.isAuto ? `<button class="btn-edit-small" data-edit="${item.id}">✎</button>` : ''}</span>
                         </li>
@@ -184,36 +194,16 @@ async function updateDisplay() {
     document.getElementById('total-assets').innerText = Math.round(princ).toLocaleString() + ' kr.';
     document.getElementById('total-balance').innerText = Math.round(inc - exp - princ).toLocaleString() + ' kr.';
 
-    // Genbind Edit-events
-    container.querySelectorAll('[data-edit]').forEach(btn => {
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            const item = posts.find(p => p.id === btn.dataset.edit);
-            if (!item) return;
-            editingPostId = item.id;
-            document.getElementById('modal-title').innerText = "Rediger post";
-            document.getElementById('post-title').value = item.title;
-            document.getElementById('post-amount').value = item.amount;
-            document.getElementById('post-type').value = item.type;
-            document.getElementById('post-category').value = item.category || 'andet';
-            document.getElementById('post-owner').value = item.owner;
-            document.getElementById('post-recurring').checked = item.isRecurring;
-            document.getElementById('budget-modal').style.display = 'flex';
-        };
-    });
+    setupItemEvents(container, posts);
 }
 
 function setupEvents(container) {
     document.getElementById('prev-month').onclick = () => { let d = new Date(selectedMonth+"-01"); d.setMonth(d.getMonth()-1); selectedMonth = d.toISOString().slice(0,7); renderBudget(container); };
     document.getElementById('next-month').onclick = () => { let d = new Date(selectedMonth+"-01"); d.setMonth(d.getMonth()+1); selectedMonth = d.toISOString().slice(0,7); renderBudget(container); };
+    container.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { currentTab = b.dataset.tab; isEditingTargets = false; renderBudget(container); });
     
-    container.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { 
-        currentTab = b.dataset.tab; 
-        isEditingTargets = false; // Nulstil redigering ved tab-skift
-        renderBudget(container); 
-    });
-    
-    document.getElementById('toggle-edit-targets').onclick = async () => {
+    const editBtn = document.getElementById('toggle-edit-targets');
+    if (editBtn) editBtn.onclick = async () => {
         if (isEditingTargets) {
             const inputs = container.querySelectorAll('.target-input');
             const newTargets = {};
@@ -222,8 +212,7 @@ function setupEvents(container) {
                 const val = parseFloat(input.value) || 0;
                 newTargets[cat] = { target: val };
             });
-            const ownerKey = currentTab === 'total' ? 'shared' : currentTab;
-            await saveBudgetTargets(ownerKey, newTargets);
+            await saveBudgetTargets(currentTab, newTargets);
         }
         isEditingTargets = !isEditingTargets;
         renderBudget(container);
@@ -247,6 +236,25 @@ function setupEvents(container) {
         document.getElementById('budget-modal').style.display = 'none';
         updateDisplay();
     };
+}
+
+function setupItemEvents(container, posts) {
+    container.querySelectorAll('[data-edit]').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const item = posts.find(p => p.id === btn.dataset.edit);
+            if (!item) return;
+            editingPostId = item.id;
+            document.getElementById('modal-title').innerText = "Rediger post";
+            document.getElementById('post-title').value = item.title;
+            document.getElementById('post-amount').value = item.amount;
+            document.getElementById('post-type').value = item.type;
+            document.getElementById('post-category').value = item.category || 'andet';
+            document.getElementById('post-owner').value = item.owner;
+            document.getElementById('post-recurring').checked = item.isRecurring;
+            document.getElementById('budget-modal').style.display = 'flex';
+        };
+    });
 }
 
 function formatMonth(m) { return new Date(m + "-01").toLocaleDateString('da-DK', { month: 'long', year: 'numeric' }); }
