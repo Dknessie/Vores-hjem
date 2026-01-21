@@ -46,7 +46,7 @@ export async function renderAssets(container) {
                 <div class="command-slider-box">
                     <div class="slider-header">
                         <label>Tidssimulering: <strong>${simulationState.monthsOffset} mdr.</strong></label>
-                        <button id="reset-sim-btn" class="btn-text-link" ${simulationState.monthsOffset === 0 ? 'disabled' : ''}>Nulstil</button>
+                        <button id="reset-sim-btn" class="btn-text-link" ${simulationState.monthsOffset === 0 && Object.keys(simulationState.customPayment).length === 0 ? 'disabled' : ''}>Nulstil simulation</button>
                     </div>
                     <input type="range" id="global-time-slider" min="0" max="120" value="${simulationState.monthsOffset}">
                     <div class="slider-labels"><span>Nu</span><span>5 år</span><span>10 år</span></div>
@@ -95,40 +95,31 @@ export async function renderAssets(container) {
             </section>
         </div>
 
-        <!-- ASSET MODAL -->
+        <!-- MODAL FOR AKTIVER -->
         <div id="asset-modal" class="modal-overlay" style="display:none;">
             <div class="modal-card">
                 <h2 id="asset-modal-title">Nyt Aktiv</h2>
                 <form id="asset-form">
-                    <div class="input-group"><label>Navn</label><input type="text" id="asset-name" required placeholder="f.eks. Hus, Bil eller Aktier"></div>
+                    <div class="input-group"><label>Navn</label><input type="text" id="asset-name" required></div>
                     <div class="input-row">
                         <div class="input-group"><label>Type</label>
                             <select id="asset-type">
-                                <option value="investment">Investering / Bolig (Stiger i %)</option>
-                                <option value="physical">Fysisk aktiv (Falder i kr.)</option>
+                                <option value="investment">Investering / Bolig</option>
+                                <option value="physical">Fysisk aktiv</option>
                             </select>
                         </div>
                         <div class="input-group"><label>Værdi nu (kr.)</label><input type="number" id="asset-value" required></div>
                     </div>
                     <div class="input-row">
-                        <div class="input-group">
-                            <label id="asset-change-label">Årlig vækstrate (%)</label>
-                            <input type="number" id="asset-change-val" step="0.1" value="0">
-                        </div>
+                        <div class="input-group"><label id="asset-change-label">Årlig vækstrate (%)</label><input type="number" id="asset-change-val" step="0.1" value="0"></div>
                         <div class="input-group"><label>Ejer</label>
                             <select id="asset-owner"><option value="user1">Mig</option><option value="user2">Kæreste</option><option value="shared" selected>Fælles</option></select>
                         </div>
                     </div>
-                    <div class="input-group">
-                        <label>Løbende opsparing (Link til budget)</label>
-                        <select id="asset-budget-link">
-                            <option value="">Ingen (Kun værdistigning)</option>
-                            ${budgetPosts.filter(p => p.category === 'opsparing' || p.type === 'income').map(p => `<option value="${p.id}">${p.title} (${p.amount} kr./md.)</option>`).join('')}
-                        </select>
-                    </div>
                     <div class="modal-buttons">
+                        <button type="button" id="delete-asset-btn" class="btn-danger-outline" style="display:none;">Slet</button>
                         <div class="main-modal-actions">
-                            <button type="button" id="close-asset-modal" class="btn-danger-outline">Annuller</button>
+                            <button type="button" id="close-asset-modal" class="btn-outline">Annuller</button>
                             <button type="submit" class="btn-submit">Gem Aktiv</button>
                         </div>
                     </div>
@@ -136,12 +127,12 @@ export async function renderAssets(container) {
             </div>
         </div>
 
-        <!-- LOAN MODAL -->
+        <!-- MODAL FOR LÅN -->
         <div id="loan-modal" class="modal-overlay" style="display:none;">
             <div class="modal-card">
                 <h2 id="loan-modal-title">Nyt Lån</h2>
                 <form id="loan-form">
-                    <div class="input-group"><label>Navn på lån</label><input type="text" id="loan-name" required placeholder="f.eks. Billån"></div>
+                    <div class="input-group"><label>Navn på lån</label><input type="text" id="loan-name" required></div>
                     <div class="input-row">
                         <div class="input-group"><label>Restgæld nu (kr.)</label><input type="number" id="loan-principal" required></div>
                         <div class="input-group"><label>Rente (% p.a.)</label><input type="number" id="loan-interest" step="0.01" required></div>
@@ -150,20 +141,13 @@ export async function renderAssets(container) {
                         <div class="input-group"><label>Mdl. Ydelse (kr.)</label><input type="number" id="loan-payment" required></div>
                         <div class="input-group"><label>Startmåned</label><input type="month" id="loan-start" required></div>
                     </div>
-                    <div class="input-row">
-                        <div class="input-group"><label>Knyt til aktiv</label>
-                            <select id="loan-asset-link">
-                                <option value="">Intet (Forbrug)</option>
-                                ${assets.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="input-group"><label>Ejer</label>
-                            <select id="loan-owner"><option value="user1">Mig</option><option value="user2">Kæreste</option><option value="shared" selected>Fælles</option></select>
-                        </div>
+                    <div class="input-group"><label>Ejer</label>
+                        <select id="loan-owner"><option value="user1">Mig</option><option value="user2">Kæreste</option><option value="shared" selected>Fælles</option></select>
                     </div>
                     <div class="modal-buttons">
+                        <button type="button" id="delete-loan-btn-modal" class="btn-danger-outline" style="display:none;">Slet</button>
                         <div class="main-modal-actions">
-                            <button type="button" id="close-loan-modal" class="btn-danger-outline">Annuller</button>
+                            <button type="button" id="close-loan-modal" class="btn-outline">Annuller</button>
                             <button type="submit" class="btn-submit">Gem Lån</button>
                         </div>
                     </div>
@@ -186,18 +170,14 @@ function renderAssetCards(assets, budgetPosts) {
             if (asset.type === 'investment') {
                 const annualR = (asset.changeValue || 0) / 100;
                 const monthlyR = Math.pow(1 + annualR, 1/12) - 1;
-                // FV = PV*(1+r)^n + PMT * (((1+r)^n - 1)/r)
-                if (monthlyR === 0) {
-                    valFuture = asset.value + (monthlyContr * months);
-                } else {
-                    valFuture = asset.value * Math.pow(1 + monthlyR, months) + monthlyContr * ((Math.pow(1 + monthlyR, months) - 1) / monthlyR);
-                }
+                if (monthlyR === 0) valFuture = asset.value + (monthlyContr * months);
+                else valFuture = asset.value * Math.pow(1 + monthlyR, months) + monthlyContr * ((Math.pow(1 + monthlyR, months) - 1) / monthlyR);
             } else {
                 valFuture = Math.max(0, asset.value - (months * (asset.changeValue || 0)));
             }
 
             return `
-                <div class="asset-item-card" data-id="${asset.id}">
+                <div class="asset-item-card">
                     <div class="item-main">
                         <div class="item-info">
                             <div class="item-type-icon">${asset.type === 'investment' ? '📈' : '🚗'}</div>
@@ -209,13 +189,13 @@ function renderAssetCards(assets, budgetPosts) {
                         <div class="item-value">
                             <div class="val">${Math.round(valFuture).toLocaleString()} kr.</div>
                             <div class="change ${asset.type === 'investment' ? 'up' : 'down'}">
-                                ${asset.type === 'investment' ? '+' + asset.changeValue + '% årligt' : '-' + asset.changeValue + ' kr./md.'}
+                                ${asset.type === 'investment' ? '+' + asset.changeValue + '%' : '-' + asset.changeValue + ' kr.'}
                             </div>
                         </div>
                     </div>
                     <div class="item-actions">
-                        <button class="btn-edit-minimal" data-edit-id="${asset.id}" data-type="asset">✎</button>
-                        <button class="btn-del-minimal" data-del-id="${asset.id}" data-type="asset">✕</button>
+                        <button class="btn-edit-minimal" data-edit-id="${asset.id}" data-type="asset">✎ Rediger</button>
+                        <button class="btn-del-minimal" data-del-id="${asset.id}" data-type="asset">✕ Slet</button>
                     </div>
                 </div>
             `;
@@ -236,12 +216,12 @@ function renderLoanCards(loans) {
             const endDate = getLoanEndDate(simLoan);
 
             return `
-                <div class="loan-item-card ${isExpanded ? 'expanded' : ''}" data-id="${loan.id}">
+                <div class="loan-item-card ${isExpanded ? 'expanded' : ''}">
                     <div class="item-main clickable-loan-header" data-id="${loan.id}">
                         <div class="item-info">
                             <div class="item-type-icon">🏦</div>
                             <div>
-                                <h4>${loan.name} ${loan.assetLinkId ? '<span class="link-badge">Knyttet</span>' : ''}</h4>
+                                <h4>${loan.name}</h4>
                                 <small>Restgæld: ${Math.round(c ? c.remainingBalance * m : 0).toLocaleString()} kr.</small>
                             </div>
                         </div>
@@ -252,20 +232,26 @@ function renderLoanCards(loans) {
                     </div>
                     ${isExpanded ? `
                         <div class="loan-simulator-inline">
-                            <div class="sim-row">
-                                <div class="sim-input-group">
-                                    <label>Simuler højere ydelse:</label>
-                                    <input type="range" class="inline-rate-slider" data-id="${loan.id}" min="${Math.round(loan.monthlyPayment * 0.5)}" max="${Math.round(loan.monthlyPayment * 4)}" value="${currentPay}">
-                                    <div class="slider-labels"><span>Standard</span><strong>${Math.round(currentPay).toLocaleString()} kr.</strong><span>Maks</span></div>
+                            <div class="sim-content">
+                                <div class="sim-row">
+                                    <div class="sim-input-group">
+                                        <label>Simuler ændret afdrag (mdl. ydelse):</label>
+                                        <input type="range" class="inline-rate-slider" data-id="${loan.id}" min="${Math.round(loan.monthlyPayment * 0.5)}" max="${Math.round(loan.monthlyPayment * 5)}" value="${currentPay}">
+                                        <div class="slider-labels"><span>-50%</span><strong>${Math.round(currentPay).toLocaleString()} kr.</strong><span>+400%</span></div>
+                                    </div>
+                                    <div class="sim-result-group">
+                                        <label>Forventet gældsfri:</label>
+                                        <div class="end-date-val">${endDate === 'Aldrig' ? 'Uendelig' : new Date(endDate + "-01").toLocaleDateString('da-DK', {month:'long', year:'numeric'})}</div>
+                                    </div>
                                 </div>
-                                <div class="sim-result-group">
-                                    <label>Gældsfri dato:</label>
-                                    <div class="end-date-val">${endDate === 'Aldrig' ? 'Uendelig' : new Date(endDate + "-01").toLocaleDateString('da-DK', {month:'long', year:'numeric'})}</div>
+                                <div class="sim-actions-bar">
+                                    <div class="sim-info-text">Simulation påvirker kun overblikket indtil du gemmer.</div>
+                                    <div class="sim-buttons">
+                                        <button class="btn-danger-outline" data-del-id="${loan.id}" data-type="loan">Slet lån</button>
+                                        <button class="btn-outline" data-edit-id="${loan.id}" data-type="loan">Rediger detaljer</button>
+                                        <button class="btn-submit save-sim-btn" data-id="${loan.id}">Gem ny ydelse</button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="sim-actions">
-                                <button class="btn-text-link" data-edit-id="${loan.id}" data-type="loan">Rediger detaljer</button>
-                                <button class="btn-del-minimal" data-del-id="${loan.id}" data-type="loan">Slet lån</button>
                             </div>
                         </div>
                     ` : ''}
@@ -302,24 +288,33 @@ function setupEvents(container, realLoans, assets) {
     container.querySelectorAll('.inline-rate-slider').forEach(slider => {
         slider.oninput = (e) => {
             simulationState.customPayment[slider.dataset.id] = parseInt(e.target.value);
-            // Throttle rendering her hvis nødvendigt, men for nu rendrer vi direkte
-            renderAssets(container);
+            // Vi opdaterer kun labels og stats for at undgå fuld re-render under slide
+            const stats = calculateComprehensiveStats(realLoans, assets, [], simulationState.monthsOffset);
+            document.querySelector('.big-val').innerText = Math.round(stats.netWorth).toLocaleString() + ' kr.';
+            slider.nextElementSibling.querySelector('strong').innerText = Math.round(e.target.value).toLocaleString() + ' kr.';
+        };
+        slider.onchange = () => renderAssets(container); // Re-render kun når man slipper
+    });
+
+    // Gem simulation permanent
+    container.querySelectorAll('.save-sim-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            const newPayment = simulationState.customPayment[id];
+            if (!newPayment) return;
+            const loan = realLoans.find(l => l.id === id);
+            if (confirm(`Vil du gemme ${Math.round(newPayment).toLocaleString()} kr. som din nye faste månedlige ydelse for ${loan.name}?`)) {
+                await updateLoan(id, { ...loan, monthlyPayment: newPayment });
+                delete simulationState.customPayment[id];
+                renderAssets(container);
+            }
         };
     });
 
-    // Asset type change label logic
-    document.getElementById('asset-type')?.addEventListener('change', (e) => {
-        const label = document.getElementById('asset-change-label');
-        if (e.target.value === 'investment') {
-            label.innerText = "Årlig vækstrate (%)";
-        } else {
-            label.innerText = "Mdl. værditab (kr.)";
-        }
-    });
-
-    // Standard Modal Logic
-    document.getElementById('open-asset-modal').onclick = () => { editingItemId = null; document.getElementById('asset-form').reset(); document.getElementById('asset-modal').style.display = 'flex'; };
-    document.getElementById('open-loan-modal').onclick = () => { editingItemId = null; document.getElementById('loan-form').reset(); document.getElementById('loan-modal').style.display = 'flex'; };
+    // Modaler
+    document.getElementById('open-asset-modal').onclick = () => { editingItemId = null; document.getElementById('asset-form').reset(); document.getElementById('delete-asset-btn').style.display = "none"; document.getElementById('asset-modal').style.display = 'flex'; };
+    document.getElementById('open-loan-modal').onclick = () => { editingItemId = null; document.getElementById('loan-form').reset(); document.getElementById('delete-loan-btn-modal').style.display = "none"; document.getElementById('loan-modal').style.display = 'flex'; };
     document.getElementById('close-asset-modal').onclick = () => document.getElementById('asset-modal').style.display = 'none';
     document.getElementById('close-loan-modal').onclick = () => document.getElementById('loan-modal').style.display = 'none';
 
@@ -329,24 +324,24 @@ function setupEvents(container, realLoans, assets) {
         editingItemId = id;
         if (btn.dataset.type === 'loan') {
             const item = realLoans.find(l => l.id === id);
+            document.getElementById('loan-modal-title').innerText = "Rediger Lån";
             document.getElementById('loan-name').value = item.name;
             document.getElementById('loan-principal').value = item.principal;
             document.getElementById('loan-interest').value = item.interestRate;
             document.getElementById('loan-payment').value = item.monthlyPayment;
             document.getElementById('loan-start').value = item.startDate;
-            document.getElementById('loan-asset-link').value = item.assetLinkId || "";
             document.getElementById('loan-owner').value = item.owner;
+            document.getElementById('delete-loan-btn-modal').style.display = "block";
             document.getElementById('loan-modal').style.display = 'flex';
         } else {
             const item = assets.find(a => a.id === id);
+            document.getElementById('asset-modal-title').innerText = "Rediger Aktiv";
             document.getElementById('asset-name').value = item.name;
             document.getElementById('asset-type').value = item.type;
             document.getElementById('asset-value').value = item.value;
             document.getElementById('asset-change-val').value = item.changeValue;
-            document.getElementById('asset-budget-link').value = item.linkedBudgetPostId || "";
             document.getElementById('asset-owner').value = item.owner;
-            const label = document.getElementById('asset-change-label');
-            label.innerText = item.type === 'investment' ? "Årlig vækstrate (%)" : "Mdl. værditab (kr.)";
+            document.getElementById('delete-asset-btn').style.display = "block";
             document.getElementById('asset-modal').style.display = 'flex';
         }
     });
@@ -360,6 +355,9 @@ function setupEvents(container, realLoans, assets) {
         }
     });
 
+    document.getElementById('delete-asset-btn').onclick = async () => { if (editingItemId && confirm('Slet aktiv?')) { await deleteAsset(editingItemId); document.getElementById('asset-modal').style.display = 'none'; renderAssets(container); } };
+    document.getElementById('delete-loan-btn-modal').onclick = async () => { if (editingItemId && confirm('Slet lån?')) { await deleteLoan(editingItemId); document.getElementById('loan-modal').style.display = 'none'; renderAssets(container); } };
+
     document.getElementById('asset-form').onsubmit = async (e) => {
         e.preventDefault();
         const d = { 
@@ -367,7 +365,6 @@ function setupEvents(container, realLoans, assets) {
             type: document.getElementById('asset-type').value, 
             value: parseFloat(document.getElementById('asset-value').value), 
             changeValue: parseFloat(document.getElementById('asset-change-val').value), 
-            linkedBudgetPostId: document.getElementById('asset-budget-link').value,
             owner: document.getElementById('asset-owner').value 
         };
         if (editingItemId) await updateAsset(editingItemId, d); else await addAsset(d);
@@ -382,7 +379,6 @@ function setupEvents(container, realLoans, assets) {
             interestRate: parseFloat(document.getElementById('loan-interest').value), 
             monthlyPayment: parseFloat(document.getElementById('loan-payment').value), 
             startDate: document.getElementById('loan-start').value, 
-            assetLinkId: document.getElementById('loan-asset-link').value, 
             owner: document.getElementById('loan-owner').value 
         };
         if (editingItemId) await updateLoan(editingItemId, d); else await addLoan(d);
@@ -413,19 +409,12 @@ function calculateComprehensiveStats(loans, assets, budgetPosts, monthsOffset) {
     assets.forEach(a => {
         if (isUser && a.owner !== currentTab && a.owner !== 'shared') return;
         let m = (isUser && a.owner === 'shared') ? 0.5 : 1;
-        const budgetPost = budgetPosts.find(p => p.id === a.linkedBudgetPostId);
-        const PMT = budgetPost ? budgetPost.amount : 0;
-        
         let valFuture = a.value;
         if (a.type === 'investment') {
             const annualR = (a.changeValue || 0) / 100;
             const monthlyR = Math.pow(1 + annualR, 1/12) - 1;
-            if (monthlyR === 0) {
-                valFuture = a.value + (PMT * monthsOffset);
-            } else {
-                valFuture = a.value * Math.pow(1 + monthlyR, monthsOffset) + PMT * ((Math.pow(1 + monthlyR, monthsOffset) - 1) / monthlyR);
-            }
-            monthlyGrowth += (valFuture * monthlyR + PMT) * m;
+            valFuture = a.value * Math.pow(1 + monthlyR, monthsOffset);
+            monthlyGrowth += (valFuture * monthlyR) * m;
         } else {
             valFuture = Math.max(0, a.value - (monthsOffset * (a.changeValue || 0)));
             monthlyLoss += (a.changeValue || 0) * m;
