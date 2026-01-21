@@ -21,7 +21,11 @@ let defaultCategories = {
 
 let activeCategories = JSON.parse(JSON.stringify(defaultCategories));
 
+/**
+ * Rendrer budgetvisningen
+ */
 export async function renderBudget(container) {
+    // Hent budgetmål baseret på den valgte fane
     if (currentTab === 'total') {
         const t1 = await getBudgetTargets('user1'), t2 = await getBudgetTargets('user2'), ts = await getBudgetTargets('shared');
         activeCategories = JSON.parse(JSON.stringify(defaultCategories));
@@ -37,7 +41,10 @@ export async function renderBudget(container) {
 
     container.innerHTML = `
         <header class="view-header">
-            <h1>Budget & Økonomi ${isSimulationMode ? '<span class="sim-badge">SIMULERING</span>' : ''}</h1>
+            <div class="header-title-group">
+                <h1>Budget & Økonomi ${isSimulationMode ? '<span class="sim-badge">SIMULERING</span>' : ''}</h1>
+                <p class="subtitle">Styr på husstandens faste og variable udgifter</p>
+            </div>
             <div class="header-actions">
                 <button id="toggle-simulation" class="btn-outline ${isSimulationMode ? 'active-sim' : ''}">
                     ${isSimulationMode ? 'Stop Simulering' : 'Start Simulering'}
@@ -61,12 +68,12 @@ export async function renderBudget(container) {
 
         <div class="budget-overview">
             <div class="stat-card income"><label>Indtægter</label><div id="total-income">0 kr.</div></div>
-            <div class="stat-card expenses"><label>Udgifter (Penge ud)</label><div id="total-expenses">0 kr.</div></div>
-            <div class="stat-card assets"><label>Heraf Vækst (Info)</label><div id="total-assets">0 kr.</div></div>
-            <div class="stat-card cashflow"><label>Penge tilbage</label><div id="total-balance">0 kr.</div></div>
+            <div class="stat-card expenses"><label>Udgifter</label><div id="total-expenses">0 kr.</div></div>
+            <div class="stat-card growth"><label>Heraf Vækst</label><div id="total-growth">0 kr.</div></div>
+            <div class="stat-card balance"><label>Rådighed</label><div id="total-balance">0 kr.</div></div>
         </div>
 
-        <section class="budget-list-section-container">
+        <section class="budget-content">
             <div class="section-bar-modern">
                 <h3>Kategorier og Poster</h3>
                 <div class="action-group">
@@ -77,14 +84,14 @@ export async function renderBudget(container) {
             <div id="category-container" class="category-grid"></div>
         </section>
 
-        <!-- MODAL TIL BUDGETPOSTER -->
+        <!-- MODAL -->
         <div id="budget-modal" class="modal-overlay" style="display:none;">
             <div class="modal-card">
                 <h2 id="modal-title">Ny budgetpost</h2>
                 <form id="budget-form">
-                    <div class="input-group"><label>Titel</label><input type="text" id="post-title" required></div>
+                    <div class="input-group"><label>Titel</label><input type="text" id="post-title" required placeholder="f.eks. Fitness eller El-regning"></div>
                     <div class="input-row">
-                        <div class="input-group"><label>Beløb</label><input type="number" id="post-amount" required></div>
+                        <div class="input-group"><label>Beløb (kr.)</label><input type="number" id="post-amount" required></div>
                         <div class="input-group"><label>Type</label>
                             <select id="post-type"><option value="income">Indtægt</option><option value="expense" selected>Udgift</option></select>
                         </div>
@@ -97,13 +104,13 @@ export async function renderBudget(container) {
                             <select id="post-owner"><option value="user1">Mig</option><option value="user2">Kæreste</option><option value="shared">Fælles (50/50)</option></select>
                         </div>
                     </div>
-                    <div class="checkbox-group"><input type="checkbox" id="post-recurring" checked><label>Løbende post</label></div>
+                    <div class="checkbox-group"><input type="checkbox" id="post-recurring" checked> <label for="post-recurring">Dette er en løbende månedlig post</label></div>
                     
                     <div class="modal-buttons">
-                        <button type="button" id="delete-post-btn" class="btn-danger-text" style="display:none;">Slet denne post permanent</button>
+                        <button type="button" id="delete-post-btn" class="btn-danger-text" style="display:none;">Slet post permanent</button>
                         <div class="main-modal-actions">
                             <button type="button" id="cancel-btn" class="btn-danger-outline">Annuller</button>
-                            <button type="submit" class="btn-submit">Gem ændringer</button>
+                            <button type="submit" class="btn-submit">Gem Post</button>
                         </div>
                     </div>
                 </form>
@@ -114,6 +121,9 @@ export async function renderBudget(container) {
     updateDisplay();
 }
 
+/**
+ * Opdaterer tallene og listerne i budgetvisningen
+ */
 async function updateDisplay() {
     const container = document.getElementById('category-container');
     if (!container) return;
@@ -125,9 +135,11 @@ async function updateDisplay() {
 
     const allPosts = [...posts, ...(isSimulationMode ? ghostPosts : [])];
 
+    // Gennemgå alle manuelle poster
     allPosts.forEach(p => {
         if (!isSimulationMode && p.isGhost) return;
         if (selectedMonth < p.startDate || (p.endDate && selectedMonth > p.endDate)) return;
+        
         const isUser = currentTab !== 'total';
         if (isUser && p.owner !== currentTab && p.owner !== 'shared') return;
         
@@ -139,17 +151,19 @@ async function updateDisplay() {
             if (!isDisabled) { totalInc += amt; catData['indtægter'].actual += amt; }
             catData['indtægter'].items.push({ ...p, displayAmount: amt, isDisabled });
         } else {
-            if (!isDisabled) {
-                totalExp += amt;
-                if (p.category === 'opsparing') totalGrowth += amt;
-                const cat = p.category || 'ovrige';
-                if (catData[cat]) catData[cat].actual += amt;
-            }
             const cat = p.category || 'ovrige';
-            if (catData[cat]) catData[cat].items.push({ ...p, displayAmount: amt, isDisabled });
+            if (catData[cat]) {
+                if (!isDisabled) {
+                    totalExp += amt;
+                    if (cat === 'opsparing') totalGrowth += amt;
+                    catData[cat].actual += amt;
+                }
+                catData[cat].items.push({ ...p, displayAmount: amt, isDisabled });
+            }
         }
     });
 
+    // Gennemgå alle lån (automatiske poster)
     loans.forEach(l => {
         const isUser = currentTab !== 'total';
         if (isUser && l.owner !== currentTab && l.owner !== 'shared') return;
@@ -169,22 +183,49 @@ async function updateDisplay() {
         }
     });
 
+    // RENDERING MED GRUPPERING
     container.innerHTML = Object.keys(activeCategories).map(k => {
-        const cat = activeCategories[k], data = catData[k], pct = Math.min(100, (data.actual / cat.target) * 100);
+        const cat = activeCategories[k], data = catData[k];
+        
+        // GRUPPERINGSLOGIK: Hvis fanen er "Husstanden", gruppér efter titel
+        let displayItems = data.items;
+        if (currentTab === 'total') {
+            const groups = {};
+            data.items.forEach(item => {
+                if (!groups[item.title]) {
+                    groups[item.title] = { ...item, displayAmount: 0, isGroup: true, originalIds: [] };
+                }
+                groups[item.title].displayAmount += item.displayAmount;
+                groups[item.title].originalIds.push(item.id);
+                // Hvis én i gruppen er aktiv, betragtes gruppen som aktiv (i simulation)
+                if (!item.isDisabled) groups[item.title].isDisabled = false; 
+            });
+            displayItems = Object.values(groups);
+        }
+
+        const pct = Math.min(100, (data.actual / cat.target) * 100);
         return `
             <div class="category-card">
-                <div class="cat-header"><h4>${cat.name}</h4>
-                    ${isEditingTargets ? `<input type="number" class="target-input" data-cat="${k}" value="${cat.target}">` : `<span>${Math.round(data.actual).toLocaleString()} / ${cat.target.toLocaleString()} kr.</span>`}
+                <div class="cat-header">
+                    <h4>${cat.name}</h4>
+                    ${isEditingTargets ? 
+                        `<input type="number" class="target-input" data-cat="${k}" value="${cat.target}">` : 
+                        `<span class="cat-total">${Math.round(data.actual).toLocaleString()} / ${cat.target.toLocaleString()} kr.</span>`
+                    }
                 </div>
-                <div class="progress-bar"><div class="progress-fill ${pct > 95 && k !== 'indtægter' ? 'warning' : ''}" style="width: ${pct}%"></div></div>
+                <div class="progress-bar"><div class="progress-fill-budget ${pct > 95 && k !== 'indtægter' ? 'warning' : ''}" style="width: ${pct}%"></div></div>
                 <ul class="cat-items">
-                    ${data.items.map(item => `
-                        <li class="small-item ${item.isDisabled ? 'item-disabled' : ''} ${item.isGhost ? 'ghost-item' : ''} ${item.isAuto ? 'auto-item' : ''} clickable-post" data-id="${item.id}" data-isghost="${item.isGhost || 'false'}" data-isauto="${item.isAuto || 'false'}">
+                    ${displayItems.map(item => `
+                        <li class="small-item ${item.isDisabled ? 'item-disabled' : ''} ${item.isGhost ? 'ghost-item' : ''} ${item.isAuto ? 'auto-item' : ''} clickable-post" 
+                            data-id="${item.id}" 
+                            data-isghost="${item.isGhost || 'false'}" 
+                            data-isauto="${item.isAuto || 'false'}"
+                            data-isgroup="${item.isGroup || 'false'}">
                             <div class="item-info">
                                 ${isSimulationMode ? `<button class="btn-toggle-sim" data-toggle-id="${item.id}" title="Slå til/fra i simulation">${item.isDisabled ? '👁‍🗨' : '👁'}</button>` : ''}
-                                <span>${item.title}</span>
+                                <span>${item.title} ${item.isGroup ? '<small class="group-tag">(Husstanden)</small>' : ''}</span>
                             </div>
-                            <div class="item-actions-group">
+                            <div class="item-amount">
                                 <span>${Math.round(item.displayAmount).toLocaleString()} kr.</span>
                             </div>
                         </li>`).join('')}
@@ -194,7 +235,7 @@ async function updateDisplay() {
 
     document.getElementById('total-income').innerText = Math.round(totalInc).toLocaleString() + ' kr.';
     document.getElementById('total-expenses').innerText = Math.round(totalExp).toLocaleString() + ' kr.';
-    document.getElementById('total-assets').innerText = Math.round(totalGrowth).toLocaleString() + ' kr.';
+    document.getElementById('total-growth').innerText = Math.round(totalGrowth).toLocaleString() + ' kr.';
     document.getElementById('total-balance').innerText = Math.round(totalInc - totalExp).toLocaleString() + ' kr.';
 
     setupItemEvents(container, posts);
@@ -206,15 +247,6 @@ function setupEvents(container) {
     container.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { currentTab = b.dataset.tab; isEditingTargets = false; renderBudget(container); });
     
     document.getElementById('toggle-simulation').onclick = () => { isSimulationMode = !isSimulationMode; if (!isSimulationMode) { disabledItemIds.clear(); ghostPosts = []; } renderBudget(container); };
-
-    document.getElementById('add-ghost-btn')?.addEventListener('click', () => { 
-        editingPostId = null; 
-        document.getElementById('budget-form').reset(); 
-        document.getElementById('modal-title').innerText = "Ny Simulation-post"; 
-        document.getElementById('delete-post-btn').style.display = "none";
-        document.getElementById('budget-modal').style.display = 'flex'; 
-        document.getElementById('budget-modal').dataset.ghost = "true"; 
-    });
 
     document.getElementById('toggle-edit-targets').onclick = async () => {
         if (isEditingTargets) {
@@ -232,24 +264,14 @@ function setupEvents(container) {
         document.getElementById('modal-title').innerText = "Ny budgetpost"; 
         document.getElementById('delete-post-btn').style.display = "none";
         document.getElementById('budget-modal').style.display = 'flex'; 
-        delete document.getElementById('budget-modal').dataset.ghost; 
     };
     
     document.getElementById('cancel-btn').onclick = () => document.getElementById('budget-modal').style.display = 'none';
 
-    // Slet funktion inde i modal (Nu rettet så den fjerner korrekt)
     document.getElementById('delete-post-btn').onclick = async () => {
         if (!editingPostId) return;
-        const isGhost = document.getElementById('budget-modal').dataset.ghost === "true";
-        
-        if (confirm('Er du sikker på, at du vil slette denne post?')) {
-            if (isGhost) {
-                // Konverterer til string for at være helt sikker på ID match
-                const idToMatch = String(editingPostId);
-                ghostPosts = ghostPosts.filter(p => String(p.id) !== idToMatch);
-            } else {
-                await deleteBudgetPost(editingPostId);
-            }
+        if (confirm('Vil du slette denne post permanent?')) {
+            await deleteBudgetPost(editingPostId);
             document.getElementById('budget-modal').style.display = 'none';
             updateDisplay();
         }
@@ -257,7 +279,6 @@ function setupEvents(container) {
 
     document.getElementById('budget-form').onsubmit = async (e) => {
         e.preventDefault();
-        const isGhost = document.getElementById('budget-modal').dataset.ghost === "true";
         const data = { 
             title: document.getElementById('post-title').value, 
             amount: parseFloat(document.getElementById('post-amount').value), 
@@ -265,35 +286,37 @@ function setupEvents(container) {
             category: document.getElementById('post-category').value, 
             owner: document.getElementById('post-owner').value, 
             isRecurring: document.getElementById('post-recurring').checked, 
-            startDate: selectedMonth, 
-            isGhost: isGhost, 
-            id: editingPostId || (isGhost ? 'ghost-' + Date.now() : null) 
+            startDate: selectedMonth
         };
-        if (isGhost) { if (editingPostId) { const idx = ghostPosts.findIndex(p => String(p.id) === String(editingPostId)); ghostPosts[idx] = data; } else { ghostPosts.push(data); } }
-        else { if (editingPostId) await updateBudgetPost(editingPostId, data); else await addBudgetPost(data); }
+        if (editingPostId) await updateBudgetPost(editingPostId, data); else await addBudgetPost(data);
         document.getElementById('budget-modal').style.display = 'none'; updateDisplay();
     };
 }
 
 function setupItemEvents(container, posts) {
-    container.querySelectorAll('.btn-toggle-sim').forEach(btn => { btn.onclick = (e) => { e.stopPropagation(); const id = btn.dataset.toggleId; if (disabledItemIds.has(id)) disabledItemIds.delete(id); else disabledItemIds.add(id); updateDisplay(); }; });
+    container.querySelectorAll('.btn-toggle-sim').forEach(btn => { 
+        btn.onclick = (e) => { 
+            e.stopPropagation(); 
+            const id = btn.dataset.toggleId; 
+            if (disabledItemIds.has(id)) disabledItemIds.delete(id); else disabledItemIds.add(id); 
+            updateDisplay(); 
+        }; 
+    });
 
     container.querySelectorAll('.clickable-post').forEach(item => {
         item.onclick = () => {
-            if (item.dataset.isauto === "true") return;
-            const isGhost = item.dataset.isghost === "true";
+            if (item.dataset.isauto === "true" || item.dataset.isgroup === "true") return; // Grupperede poster kan ikke redigeres direkte fra husstanden
             const id = item.dataset.id;
-            const data = isGhost ? ghostPosts.find(p => String(p.id) === String(id)) : posts.find(p => String(p.id) === String(id));
+            const data = posts.find(p => String(p.id) === String(id));
             if (!data) return;
             editingPostId = data.id;
-            document.getElementById('modal-title').innerText = isGhost ? "Rediger Simulation" : "Rediger post";
+            document.getElementById('modal-title').innerText = "Rediger post";
             document.getElementById('post-title').value = data.title;
             document.getElementById('post-amount').value = data.amount;
             document.getElementById('post-type').value = data.type;
             document.getElementById('post-category').value = data.category || 'ovrige';
             document.getElementById('post-owner').value = data.owner;
             document.getElementById('post-recurring').checked = data.isRecurring;
-            if (isGhost) document.getElementById('budget-modal').dataset.ghost = "true"; else delete document.getElementById('budget-modal').dataset.ghost;
             document.getElementById('delete-post-btn').style.display = "block";
             document.getElementById('budget-modal').style.display = 'flex';
         };
