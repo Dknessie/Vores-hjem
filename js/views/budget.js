@@ -107,9 +107,9 @@ export async function renderBudget(container) {
                     <div class="checkbox-group"><input type="checkbox" id="post-recurring" checked> <label for="post-recurring">Dette er en løbende månedlig post</label></div>
                     
                     <div class="modal-buttons">
-                        <button type="button" id="delete-post-btn" class="btn-danger-text" style="display:none;">Slet post permanent</button>
+                        <button type="button" id="delete-post-btn" class="btn-danger-outline" style="display:none;">Slet</button>
                         <div class="main-modal-actions">
-                            <button type="button" id="cancel-btn" class="btn-danger-outline">Annuller</button>
+                            <button type="button" id="cancel-btn" class="btn-outline">Annuller</button>
                             <button type="submit" class="btn-submit">Gem Post</button>
                         </div>
                     </div>
