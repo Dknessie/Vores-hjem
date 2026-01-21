@@ -151,6 +151,44 @@ button {
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
+/* --- MODALS (FIXED CENTERING) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(46, 58, 52, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center; /* Horisontal centrering */
+    align-items: center;     /* Vertikal centrering */
+    z-index: 3000;
+}
+
+.modal-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 28px;
+    width: 95%;
+    max-width: 600px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.3);
+    animation: slideDown 0.3s ease-out;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    gap: 1rem;
+}
+
+.main-modal-actions {
+    display: flex;
+    gap: 1rem;
+}
+
 /* --- BUDGET SIDE SPECIFIKT --- */
 .budget-overview {
     display: grid;
@@ -257,7 +295,7 @@ button {
 .command-slider-box { border-left: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1); padding: 0 2rem; }
 .slider-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem; }
 
-/* FIX: Gør nulstil-knappen tydelig mod mørkegrøn */
+/* FIX: Nulstil knap tydelighed */
 .btn-text-link { 
     background: rgba(255,255,255,0.1); 
     color: white; 
@@ -266,6 +304,7 @@ button {
     font-size: 0.75rem; 
     padding: 4px 10px;
     border-radius: 6px;
+    text-transform: uppercase;
 }
 .btn-text-link:hover { background: rgba(255,255,255,0.2); }
 .btn-text-link:disabled { opacity: 0.3; cursor: default; }
@@ -319,19 +358,33 @@ button {
 .change.up { color: var(--success-green); }
 .change.down { color: var(--danger-bright); }
 
-/* FIX: Bedre udvidelses-visning for gældsposter */
+/* Item actions on asset cards */
+.item-actions {
+    background: #f9f8f5;
+    padding: 0.8rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    border-top: 1px solid #f2f1eb;
+}
+
+/* --- LOAN SIMULATOR INLINE --- */
 .loan-item-card.expanded { border: 2px solid var(--primary-green); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
 
 .loan-simulator-inline {
-    background: #f9f8f5;
+    background: #fdfdfa;
     padding: 2rem;
     border-top: 2px solid #ecebe4;
+    animation: slideDown 0.3s ease-out;
 }
 
+.sim-content { display: flex; flex-direction: column; gap: 1.5rem; }
+
 .sim-row {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2rem;
+    align-items: center;
 }
 
 .sim-input-group label, .sim-result-group label {
@@ -352,52 +405,16 @@ button {
     letter-spacing: -1px;
 }
 
-.sim-actions {
-    margin-top: 1.5rem;
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-}
-
-/* --- MODALS --- */
-.modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(46, 58, 52, 0.6);
-    backdrop-filter: blur(8px);
-    display: flex; justify(content): center; align-items: center;
-    z-index: 3000;
-}
-
-.modal-card {
-    background: white; padding: 2.5rem; border-radius: 28px;
-    width: 95%; max-width: 600px;
-    box-shadow: 0 30px 70px rgba(0,0,0,0.25);
-}
-
-.modal-buttons {
+.sim-actions-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 2rem;
-    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #f2f1eb;
 }
 
-.main-modal-actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-.input-group { margin-bottom: 1.2rem; }
-.input-group label { display: block; font-size: 0.85rem; font-weight: 800; color: var(--wood-brown); margin-bottom: 6px; }
-.input-group input, .input-group select {
-    width: 100%; background: #f5f4ef; border: 2px solid transparent;
-    padding: 1rem; border-radius: 14px; font-size: 1rem;
-}
-.input-group input:focus { border-color: var(--primary-green); outline: none; }
-
-.checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
-.checkbox-group input { width: 18px; height: 18px; accent-color: var(--primary-green); }
+.sim-info-text { font-size: 0.75rem; color: var(--text-light); font-style: italic; }
+.sim-buttons { display: flex; gap: 0.8rem; }
 
 /* --- KNAPPER --- */
 .btn-add, .btn-submit { background: var(--primary-green); color: white; padding: 1rem 2rem; border-radius: 14px; font-weight: 800; }
@@ -410,13 +427,25 @@ button {
 .btn-danger-outline:hover { background: var(--danger-bright); color: white; }
 
 .btn-edit-minimal, .btn-del-minimal {
-    background: #f8fbf9; color: var(--text-light);
-    width: 32px; height: 32px; border-radius: 8px;
+    background: transparent; color: var(--text-light);
+    font-weight: 700; font-size: 0.85rem;
     display: flex; justify-content: center; align-items: center;
-    font-size: 0.9rem;
 }
-.btn-edit-minimal:hover { background: var(--primary-green); color: white; }
-.btn-del-minimal:hover { background: var(--danger-bright); color: white; }
+.btn-edit-minimal:hover { color: var(--primary-green); }
+.btn-del-minimal:hover { color: var(--danger-bright); }
+
+/* --- INPUTS --- */
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+.input-group { margin-bottom: 1.2rem; }
+.input-group label { display: block; font-size: 0.85rem; font-weight: 800; color: var(--wood-brown); margin-bottom: 6px; }
+.input-group input, .input-group select {
+    width: 100%; background: #f5f4ef; border: 2px solid transparent;
+    padding: 1rem; border-radius: 14px; font-size: 1rem;
+}
+.input-group input:focus { border-color: var(--primary-green); outline: none; }
+
+.checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+.checkbox-group input { width: 18px; height: 18px; accent-color: var(--primary-green); }
 
 /* --- RESPONSIVITET --- */
 @media (max-width: 1100px) {
@@ -429,6 +458,8 @@ button {
     .nav-links { gap: 1rem; font-size: 0.8rem; }
     .sticky-command-center { top: 125px; }
     .input-row { grid-template-columns: 1fr; }
+    .sim-row { grid-template-columns: 1fr; gap: 1.5rem; }
+    .sim-actions-bar { flex-direction: column; gap: 1.5rem; }
 }
 
 @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
