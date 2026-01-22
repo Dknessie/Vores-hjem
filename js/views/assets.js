@@ -1,4 +1,4 @@
-import { addLoan, getLoans, deleteLoan, updateLoan, getLoanEndDate, calculateLoanForMonth, addAsset, getAssets, deleteAsset, updateAsset, calculateTotalInterest } from "../services/loanService.js";
+import { addLoan, getLoans, deleteLoan, updateLoan, getLoanEndDate, calculateLoanForMonth, addAsset, getAssets, deleteAsset, updateAsset } from "../services/loanService.js";
 import { getBudgetPosts } from "../services/budgetService.js";
 
 // State for denne visning
@@ -10,6 +10,14 @@ let simulationState = {
 
 let currentTab = 'total';
 let editingItemId = null;
+
+// Standard kategorier fra budgettet til brug i lån
+const budgetCategories = {
+    faste: "Faste udgifter",
+    transport: "Transport",
+    ovrige: "Øvrige faste",
+    opsparing: "Opsparing"
+};
 
 /**
  * Hovedfunktion til at rendre Formue & Gæld visningen
@@ -33,7 +41,6 @@ export async function renderAssets(container) {
             </div>
         </header>
 
-        <!-- STICKY COMMAND CENTER -->
         <section class="sticky-command-center">
             <div class="command-grid">
                 <div class="command-stat main-stat">
@@ -72,7 +79,6 @@ export async function renderAssets(container) {
         </div>
 
         <div class="dual-column-grid">
-            <!-- VENSTRE: AKTIVER -->
             <section class="asset-column">
                 <div class="column-header">
                     <h3>Aktiver & Opsparing</h3>
@@ -83,7 +89,6 @@ export async function renderAssets(container) {
                 </div>
             </section>
 
-            <!-- HØJRE: GÆLD -->
             <section class="debt-column">
                 <div class="column-header">
                     <h3>Gæld & Lån</h3>
@@ -95,7 +100,6 @@ export async function renderAssets(container) {
             </section>
         </div>
 
-        <!-- MODAL FOR AKTIVER -->
         <div id="asset-modal" class="modal-overlay" style="display:none;">
             <div class="modal-card">
                 <h2 id="asset-modal-title">Nyt Aktiv</h2>
@@ -127,22 +131,32 @@ export async function renderAssets(container) {
             </div>
         </div>
 
-        <!-- MODAL FOR LÅN -->
         <div id="loan-modal" class="modal-overlay" style="display:none;">
             <div class="modal-card">
                 <h2 id="loan-modal-title">Nyt Lån</h2>
                 <form id="loan-form">
-                    <div class="input-group"><label>Navn på lån</label><input type="text" id="loan-name" required></div>
+                    <div class="input-group"><label>Navn på lån</label><input type="text" id="loan-name" required placeholder="f.eks. Peugeot 208"></div>
                     <div class="input-row">
                         <div class="input-group"><label>Restgæld nu (kr.)</label><input type="number" id="loan-principal" required></div>
                         <div class="input-group"><label>Rente (% p.a.)</label><input type="number" id="loan-interest" step="0.01" required></div>
                     </div>
                     <div class="input-row">
                         <div class="input-group"><label>Mdl. Ydelse (kr.)</label><input type="number" id="loan-payment" required></div>
-                        <div class="input-group"><label>Startmåned</label><input type="month" id="loan-start" required></div>
+                        <div class="input-group"><label>Kategori i budget</label>
+                            <select id="loan-category">
+                                ${Object.keys(budgetCategories).map(key => `<option value="${key}">${budgetCategories[key]}</option>`).join('')}
+                            </select>
+                        </div>
                     </div>
-                    <div class="input-group"><label>Ejer</label>
-                        <select id="loan-owner"><option value="user1">Mig</option><option value="user2">Kæreste</option><option value="shared" selected>Fælles</option></select>
+                    <div class="input-row">
+                        <div class="input-group"><label>Startmåned</label><input type="month" id="loan-start" required></div>
+                        <div class="input-group"><label>Ejer</label>
+                            <select id="loan-owner">
+                                <option value="user1">Mig</option>
+                                <option value="user2">Kæreste</option>
+                                <option value="shared" selected>Fælles</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="modal-buttons">
                         <button type="button" id="delete-loan-btn-modal" class="btn-danger-outline" style="display:none;">Slet</button>
@@ -288,15 +302,13 @@ function setupEvents(container, realLoans, assets) {
     container.querySelectorAll('.inline-rate-slider').forEach(slider => {
         slider.oninput = (e) => {
             simulationState.customPayment[slider.dataset.id] = parseInt(e.target.value);
-            // Vi opdaterer kun labels og stats for at undgå fuld re-render under slide
             const stats = calculateComprehensiveStats(realLoans, assets, [], simulationState.monthsOffset);
             document.querySelector('.big-val').innerText = Math.round(stats.netWorth).toLocaleString() + ' kr.';
             slider.nextElementSibling.querySelector('strong').innerText = Math.round(e.target.value).toLocaleString() + ' kr.';
         };
-        slider.onchange = () => renderAssets(container); // Re-render kun når man slipper
+        slider.onchange = () => renderAssets(container); 
     });
 
-    // Gem simulation permanent
     container.querySelectorAll('.save-sim-btn').forEach(btn => {
         btn.onclick = async (e) => {
             e.stopPropagation();
@@ -312,7 +324,6 @@ function setupEvents(container, realLoans, assets) {
         };
     });
 
-    // Modaler
     document.getElementById('open-asset-modal').onclick = () => { editingItemId = null; document.getElementById('asset-form').reset(); document.getElementById('delete-asset-btn').style.display = "none"; document.getElementById('asset-modal').style.display = 'flex'; };
     document.getElementById('open-loan-modal').onclick = () => { editingItemId = null; document.getElementById('loan-form').reset(); document.getElementById('delete-loan-btn-modal').style.display = "none"; document.getElementById('loan-modal').style.display = 'flex'; };
     document.getElementById('close-asset-modal').onclick = () => document.getElementById('asset-modal').style.display = 'none';
@@ -329,6 +340,7 @@ function setupEvents(container, realLoans, assets) {
             document.getElementById('loan-principal').value = item.principal;
             document.getElementById('loan-interest').value = item.interestRate;
             document.getElementById('loan-payment').value = item.monthlyPayment;
+            document.getElementById('loan-category').value = item.category || 'faste';
             document.getElementById('loan-start').value = item.startDate;
             document.getElementById('loan-owner').value = item.owner;
             document.getElementById('delete-loan-btn-modal').style.display = "block";
@@ -378,6 +390,7 @@ function setupEvents(container, realLoans, assets) {
             principal: parseFloat(document.getElementById('loan-principal').value), 
             interestRate: parseFloat(document.getElementById('loan-interest').value), 
             monthlyPayment: parseFloat(document.getElementById('loan-payment').value), 
+            category: document.getElementById('loan-category').value,
             startDate: document.getElementById('loan-start').value, 
             owner: document.getElementById('loan-owner').value 
         };
