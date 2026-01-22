@@ -25,7 +25,6 @@ let activeCategories = JSON.parse(JSON.stringify(defaultCategories));
  * Rendrer budgetvisningen
  */
 export async function renderBudget(container) {
-    // Hent budgetmål baseret på den valgte fane
     if (currentTab === 'total') {
         const t1 = await getBudgetTargets('user1'), t2 = await getBudgetTargets('user2'), ts = await getBudgetTargets('shared');
         activeCategories = JSON.parse(JSON.stringify(defaultCategories));
@@ -84,7 +83,6 @@ export async function renderBudget(container) {
             <div id="category-container" class="category-grid"></div>
         </section>
 
-        <!-- MODAL -->
         <div id="budget-modal" class="modal-overlay" style="display:none;">
             <div class="modal-card">
                 <h2 id="modal-title">Ny budgetpost</h2>
@@ -166,39 +164,48 @@ async function updateDisplay() {
     // Gennemgå alle lån (automatiske poster)
     loans.forEach(l => {
         const isUser = currentTab !== 'total';
+        // Rettelse: Respekter ejer på lån i budgettet
         if (isUser && l.owner !== currentTab && l.owner !== 'shared') return;
+        
         const c = calculateLoanForMonth(l, selectedMonth);
         if (c) {
             let m = (isUser && l.owner === 'shared') ? 0.5 : 1;
             const interest = c.interest * m, principal = c.principalPaid * m;
+            
+            // Rettelse: Tjek kun på l.id for at slå hele lånet til/fra i simulation
             const isDisabled = isSimulationMode && disabledItemIds.has(l.id);
             
             if (!isDisabled) { totalExp += (interest + principal); totalGrowth += principal; }
-            const catKey = l.name.toLowerCase().includes('bil') ? 'transport' : 'faste';
+            
+            // Rettelse: Brug lånets valgte kategori, eller fald tilbage på logikken
+            let catKey = l.category;
+            if (!catKey) {
+                catKey = l.name.toLowerCase().includes('bil') ? 'transport' : 'faste';
+            }
+
             if (catData[catKey]) {
                 if (!isDisabled) catData[catKey].actual += (interest + principal);
-                catData[catKey].items.push({ id: l.id, title: l.name + " (Rente)", displayAmount: interest, isAuto: true, isDisabled });
-                catData[catKey].items.push({ id: l.id + "-p", title: l.name + " (Afdrag)", displayAmount: principal, isAuto: true, isPrincipal: true, isDisabled });
+                catData[catKey].items.push({ id: l.id, title: l.name + " (Rente)", displayAmount: interest, isAuto: true, isDisabled, isLoan: true });
+                catData[catKey].items.push({ id: l.id, title: l.name + " (Afdrag)", displayAmount: principal, isAuto: true, isPrincipal: true, isDisabled, isLoan: true });
             }
         }
     });
 
-    // RENDERING MED GRUPPERING
+    // RENDERING
     container.innerHTML = Object.keys(activeCategories).map(k => {
         const cat = activeCategories[k], data = catData[k];
         
-        // GRUPPERINGSLOGIK: Hvis fanen er "Husstanden", gruppér efter titel
         let displayItems = data.items;
         if (currentTab === 'total') {
             const groups = {};
             data.items.forEach(item => {
-                if (!groups[item.title]) {
-                    groups[item.title] = { ...item, displayAmount: 0, isGroup: true, originalIds: [] };
+                const groupTitle = item.title.replace(" (Rente)", "").replace(" (Afdrag)", "");
+                if (!groups[groupTitle]) {
+                    groups[groupTitle] = { ...item, title: groupTitle, displayAmount: 0, isGroup: true, originalIds: [] };
                 }
-                groups[item.title].displayAmount += item.displayAmount;
-                groups[item.title].originalIds.push(item.id);
-                // Hvis én i gruppen er aktiv, betragtes gruppen som aktiv (i simulation)
-                if (!item.isDisabled) groups[item.title].isDisabled = false; 
+                groups[groupTitle].displayAmount += item.displayAmount;
+                groups[groupTitle].originalIds.push(item.id);
+                if (!item.isDisabled) groups[groupTitle].isDisabled = false; 
             });
             displayItems = Object.values(groups);
         }
@@ -305,7 +312,7 @@ function setupItemEvents(container, posts) {
 
     container.querySelectorAll('.clickable-post').forEach(item => {
         item.onclick = () => {
-            if (item.dataset.isauto === "true" || item.dataset.isgroup === "true") return; // Grupperede poster kan ikke redigeres direkte fra husstanden
+            if (item.dataset.isauto === "true" || item.dataset.isgroup === "true") return; 
             const id = item.dataset.id;
             const data = posts.find(p => String(p.id) === String(id));
             if (!data) return;
