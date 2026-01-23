@@ -53,25 +53,6 @@ export async function deleteAsset(id) {
  * AVANCERET MATEMATIK TIL SIMULERING
  */
 
-// Beregner de samlede renteomkostninger for et lån med en given ydelse
-export function calculateTotalInterest(loan, monthlyPayment) {
-    let balance = loan.principal;
-    const monthlyRate = (loan.interestRate / 100) / 12;
-    let totalInterest = 0;
-    let safety = 0;
-    
-    while (balance > 0 && safety < 600) {
-        const interest = balance * monthlyRate;
-        const principal = monthlyPayment - interest;
-        if (principal <= 0) return Infinity; // Lånet bliver aldrig betalt ud
-        
-        totalInterest += interest;
-        balance -= principal;
-        safety++;
-    }
-    return totalInterest;
-}
-
 export function calculateLoanForMonth(loan, targetMonthStr) {
     const start = new Date(loan.startDate + "-01");
     const target = new Date(targetMonthStr + "-01");
