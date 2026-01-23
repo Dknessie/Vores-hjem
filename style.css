@@ -316,7 +316,7 @@ button {
 .item-amount { font-weight: 700; color: var(--text-main); }
 .auto-item { font-style: italic; color: var(--text-light); }
 
-/* --- PROGNOSE GRAF (NY) --- */
+/* --- PROGNOSE GRAF --- */
 .graph-section {
     background: white;
     border-radius: var(--border-radius);
@@ -415,8 +415,28 @@ button {
     display: flex; justify-content: center; align-items: center; border-radius: 14px;
 }
 
+/* Friværdi tag styling */
+.equity-tag {
+    font-size: 0.75rem;
+    color: var(--success-green);
+    background: #eef7f2;
+    padding: 2px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
 .item-value { text-align: right; }
 .item-value .val { font-size: 1.2rem; font-weight: 900; }
+
+.dep-hint { 
+    color: var(--text-light); 
+    font-size: 0.7rem; 
+    margin-right: 5px; 
+    font-weight: 600;
+}
+
 .change.up { color: var(--success-green); }
 .change.down { color: var(--danger-bright); }
 
