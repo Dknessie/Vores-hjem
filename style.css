@@ -316,6 +316,49 @@ button {
 .item-amount { font-weight: 700; color: var(--text-main); }
 .auto-item { font-style: italic; color: var(--text-light); }
 
+/* --- PROGNOSE GRAF (NY) --- */
+.graph-section {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 2.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: var(--shadow);
+}
+
+.section-bar-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.graph-legend {
+    display: flex;
+    gap: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-light);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-item i {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.graph-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
 /* --- FORMUE & GÆLD: COMMAND CENTER --- */
 .sticky-command-center {
     position: sticky;
@@ -344,10 +387,10 @@ button {
 .slider-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem; }
 
 .btn-text-link { 
-    background: rgba(255,255,255,0.1); color: white; 
+    background: rgba(255, 255, 255, 0.1); color: white; 
     font-weight: 700; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; text-transform: uppercase;
 }
-.btn-text-link:hover { background: rgba(255,255,255,0.2); }
+.btn-text-link:hover { background: rgba(255, 255, 255, 0.2); }
 .btn-text-link:disabled { opacity: 0.3; cursor: default; }
 
 #global-time-slider { width: 100%; accent-color: white; cursor: pointer; }
@@ -421,6 +464,7 @@ button {
     .dual-column-grid { grid-template-columns: 1fr; }
     .command-grid { grid-template-columns: 1fr; padding: 1.5rem; text-align: center; }
     .command-slider-box { border: none; padding: 1rem 0; }
+    .graph-section { padding: 1.5rem; }
 }
 
 @media (max-width: 600px) {
@@ -429,6 +473,8 @@ button {
     .view-header { flex-direction: column; gap: 1.5rem; }
     .header-actions { width: 100%; flex-wrap: wrap; }
     .sticky-command-center { top: 125px; }
+    .section-bar-modern { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .graph-legend { gap: 10px; flex-wrap: wrap; }
 }
 
 @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
