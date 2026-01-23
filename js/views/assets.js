@@ -87,7 +87,7 @@ export async function renderAssets(container) {
                     <span class="legend-item"><i style="background: var(--accent-blue);"></i> Netto</span>
                 </div>
             </div>
-            <div class="graph-container" style="position: relative; height: 250px; width: 100%;">
+            <div class="graph-container" style="position: relative; height: 300px; width: 100%;">
                 <canvas id="projection-graph"></canvas>
             </div>
         </section>
@@ -100,7 +100,7 @@ export async function renderAssets(container) {
                     <span class="total-badge">${Math.round(stats.totalAssets).toLocaleString()} kr.</span>
                 </div>
                 <div class="assets-list">
-                    ${renderAssetCards(assets)}
+                    ${renderAssetCards(assets, realLoans)}
                 </div>
             </section>
 
@@ -121,22 +121,30 @@ export async function renderAssets(container) {
             <div class="modal-card">
                 <h2 id="asset-modal-title">Nyt Aktiv</h2>
                 <form id="asset-form">
-                    <div class="input-group"><label>Navn</label><input type="text" id="asset-name" required placeholder="f.eks. Opsparingskonto eller Aktiedepot"></div>
+                    <div class="input-group"><label>Navn</label><input type="text" id="asset-name" required placeholder="f.eks. Peugeot 208"></div>
                     <div class="input-row">
                         <div class="input-group"><label>Type</label>
                             <select id="asset-type">
+                                <option value="physical">Fysisk aktiv (Bil/Bolig)</option>
                                 <option value="investment">Investering / Opsparing</option>
-                                <option value="physical">Fysisk aktiv (f.eks. Bil)</option>
                             </select>
                         </div>
                         <div class="input-group"><label>Værdi nu (kr.)</label><input type="number" id="asset-value" required></div>
                     </div>
                     <div class="input-row">
                         <div class="input-group"><label>Månedligt indskud (kr.)</label><input type="number" id="asset-deposit" value="0"></div>
-                        <div class="input-group"><label id="asset-change-label">Årlig vækst (%) / Afskrivning (kr./md)</label><input type="number" id="asset-change-val" step="0.1" value="0"></div>
+                        <div class="input-group"><label>Årlig vækst (%) / Afskrivning (kr./md)</label><input type="number" id="asset-change-val" step="0.1" value="0"></div>
                     </div>
-                    <div class="input-group"><label>Ejer</label>
-                        <select id="asset-owner"><option value="user1">Mig</option><option value="user2">Kæreste</option><option value="shared" selected>Fælles</option></select>
+                    <div class="input-row">
+                        <div class="input-group"><label>Tilknyt lån (til friværdi)</label>
+                            <select id="asset-linked-loan">
+                                <option value="">-- Intet lån --</option>
+                                ${realLoans.map(l => `<option value="${l.id}">${l.name} (${l.owner})</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Ejer</label>
+                            <select id="asset-owner"><option value="user1">Mig</option><option value="user2">Kæreste</option><option value="shared" selected>Fælles</option></select>
+                        </div>
                     </div>
                     <div class="modal-buttons">
                         <button type="button" id="delete-asset-btn" class="btn-danger-outline" style="display:none;">Slet</button>
@@ -194,7 +202,7 @@ export async function renderAssets(container) {
 }
 
 /**
- * Tegner prognose-grafen på canvas
+ * Tegner prognose-grafen på canvas med beløb ved milepæle
  */
 function drawProjectionGraph(loans, assets) {
     const canvas = document.getElementById('projection-graph');
@@ -207,7 +215,6 @@ function drawProjectionGraph(loans, assets) {
     const months = 120; // 10 år
     const data = { assets: [], debt: [], net: [] };
     
-    // Beregn datapunkter
     for (let i = 0; i <= months; i++) {
         const stats = calculateComprehensiveStats(loans, assets, i);
         data.assets.push(stats.totalAssets);
@@ -215,19 +222,17 @@ function drawProjectionGraph(loans, assets) {
         data.net.push(stats.netWorth);
     }
 
-    // Find max værdi til skalering
-    const maxVal = Math.max(...data.assets, 100000); // Minimum 100k skala
-    const padding = 40;
+    const maxVal = Math.max(...data.assets, ...data.debt, 100000); 
+    const padding = 50;
     const chartW = canvas.width - padding * 2;
     const chartH = canvas.height - padding * 2;
 
     const getX = (m) => padding + (m / months) * chartW;
     const getY = (v) => padding + chartH - (v / maxVal) * chartH;
 
-    // Ryd canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Tegn grid-linjer (vandrette)
+    // Grid linjer
     ctx.strokeStyle = '#e2e1d8';
     ctx.lineWidth = 1;
     ctx.setLineDash([5, 5]);
@@ -240,7 +245,7 @@ function drawProjectionGraph(loans, assets) {
     }
     ctx.setLineDash([]);
 
-    // Hjælpefunktion til at tegne en kurve
+    // Tegn linjer
     const drawLine = (points, color, width = 3) => {
         ctx.beginPath();
         ctx.strokeStyle = color;
@@ -253,62 +258,100 @@ function drawProjectionGraph(loans, assets) {
         ctx.stroke();
     };
 
-    // Tegn linjer
     drawLine(data.assets, '#2d6a4f');
     drawLine(data.debt, '#e53e3e');
     drawLine(data.net, '#4a667a', 5);
 
-    // Tegn tidsindikator (slider position)
+    // --- MILEPÆLE ---
+    const milestones = [12, 36, 60, 120]; // 1, 3, 5, 10 år
+    milestones.forEach(m => {
+        const x = getX(m);
+        
+        // Datapunkter for Nettoformue
+        const v = data.net[m];
+        const y = getY(v);
+
+        // Tegn prik
+        ctx.fillStyle = '#4a667a';
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Tegn tekst label
+        ctx.fillStyle = '#2e2e2e';
+        ctx.font = 'bold 10px Segoe UI';
+        ctx.textAlign = 'center';
+        const labelText = Math.round(v/1000) + 'k';
+        ctx.fillText(labelText, x, y - 12);
+        
+        // Tids label på X-aksen
+        ctx.fillStyle = '#767676';
+        ctx.font = '9px Segoe UI';
+        ctx.fillText((m/12) + ' år', x, padding + chartH + 15);
+    });
+
+    // Simulerings-linje
     const simX = getX(simulationState.monthsOffset);
-    ctx.strokeStyle = 'rgba(93, 74, 68, 0.5)';
-    ctx.setLineDash([2, 2]);
+    ctx.strokeStyle = 'rgba(93, 74, 68, 0.4)';
+    ctx.setLineDash([3, 3]);
     ctx.beginPath();
     ctx.moveTo(simX, padding);
     ctx.lineTo(simX, padding + chartH);
     ctx.stroke();
+    ctx.setLineDash([]);
 }
 
-function renderAssetCards(assets) {
+function renderAssetCards(assets, loans) {
     return assets
         .filter(a => currentTab === 'total' || a.owner === currentTab || a.owner === 'shared')
         .map(asset => {
             const months = simulationState.monthsOffset;
             const isUser = currentTab !== 'total';
-            // 50/50 logik: Hvis vi kigger på "Mig" eller "Kæreste" og aktivet er fælles, så halver værdien
             const multiplier = (isUser && asset.owner === 'shared') ? 0.5 : 1;
             
+            // Fremtidig værdi af aktivet
             let valFuture = asset.value;
             const monthlyDeposit = asset.monthlyDeposit || 0;
-
             if (asset.type === 'investment') {
                 const annualR = (asset.changeValue || 0) / 100;
                 const monthlyR = Math.pow(1 + annualR, 1/12) - 1;
-                if (monthlyR === 0) {
-                    valFuture = asset.value + (monthlyDeposit * months);
-                } else {
-                    valFuture = asset.value * Math.pow(1 + monthlyR, months) + monthlyDeposit * ((Math.pow(1 + monthlyR, months) - 1) / monthlyR);
-                }
+                if (monthlyR === 0) valFuture = asset.value + (monthlyDeposit * months);
+                else valFuture = asset.value * Math.pow(1 + monthlyR, months) + monthlyDeposit * ((Math.pow(1 + monthlyR, months) - 1) / monthlyR);
             } else {
-                // Fysisk aktiv afskrives månedligt (changeValue er her kr/md)
-                valFuture = Math.max(0, asset.value - (months * (asset.changeValue || 0)));
-                // Man kan stadig indbetale til en konto knyttet til aktivet
-                valFuture += (monthlyDeposit * months);
+                valFuture = Math.max(0, asset.value - (months * (asset.changeValue || 0))) + (monthlyDeposit * months);
+            }
+
+            // Beregn Friværdi (modregning af lån)
+            let linkedLoanText = "";
+            let equityValue = valFuture;
+            if (asset.linkedLoanId) {
+                const loan = loans.find(l => l.id === asset.linkedLoanId);
+                if (loan) {
+                    const lCalc = calculateLoanForMonth(loan, getOffsetMonth(months));
+                    const debtNow = lCalc ? lCalc.remainingBalance : 0;
+                    equityValue = valFuture - debtNow;
+                    linkedLoanText = `<div class="equity-tag">Friværdi: <strong>${Math.round(equityValue * multiplier).toLocaleString()} kr.</strong></div>`;
+                }
             }
 
             return `
                 <div class="asset-item-card">
                     <div class="item-main">
                         <div class="item-info">
-                            <div class="item-type-icon">${asset.type === 'investment' ? '📈' : '🚗'}</div>
+                            <div class="item-type-icon">${asset.type === 'investment' ? '📈' : '🏠'}</div>
                             <div>
                                 <h4>${asset.name}</h4>
                                 <small>${asset.owner === 'shared' ? 'Fælles' : (asset.owner === 'user1' ? 'Mig' : 'Kæreste')}</small>
+                                ${linkedLoanText}
                             </div>
                         </div>
                         <div class="item-value">
                             <div class="val">${Math.round(valFuture * multiplier).toLocaleString()} kr.</div>
                             <div class="change ${asset.type === 'investment' ? 'up' : 'down'}">
-                                ${monthlyDeposit > 0 ? `<span style="color:var(--text-light); font-size:0.7rem; margin-right:5px;">+${monthlyDeposit} kr./md.</span>` : ''}
+                                ${monthlyDeposit > 0 ? `<span class="dep-hint">+${monthlyDeposit} kr./md.</span>` : ''}
                                 ${asset.type === 'investment' ? '+' + asset.changeValue + '%' : '-' + asset.changeValue + ' kr.'}
                             </div>
                         </div>
@@ -408,7 +451,7 @@ function setupEvents(container, realLoans, assets) {
     container.querySelectorAll('.inline-rate-slider').forEach(slider => {
         slider.oninput = (e) => {
             simulationState.customPayment[slider.dataset.id] = parseInt(e.target.value);
-            drawProjectionGraph(realLoans, assets); // Opdater kun grafen undervejs
+            drawProjectionGraph(realLoans, assets); 
         };
         slider.onchange = () => renderAssets(container); 
     });
@@ -457,6 +500,7 @@ function setupEvents(container, realLoans, assets) {
             document.getElementById('asset-value').value = item.value;
             document.getElementById('asset-deposit').value = item.monthlyDeposit || 0;
             document.getElementById('asset-change-val').value = item.changeValue;
+            document.getElementById('asset-linked-loan').value = item.linkedLoanId || "";
             document.getElementById('asset-owner').value = item.owner;
             document.getElementById('delete-asset-btn').style.display = "block";
             document.getElementById('asset-modal').style.display = 'flex';
@@ -483,6 +527,7 @@ function setupEvents(container, realLoans, assets) {
             value: parseFloat(document.getElementById('asset-value').value), 
             monthlyDeposit: parseFloat(document.getElementById('asset-deposit').value) || 0,
             changeValue: parseFloat(document.getElementById('asset-change-val').value), 
+            linkedLoanId: document.getElementById('asset-linked-loan').value,
             owner: document.getElementById('asset-owner').value 
         };
         if (editingItemId) await updateAsset(editingItemId, d); else await addAsset(d);
@@ -507,9 +552,6 @@ function setupEvents(container, realLoans, assets) {
 
 function getOffsetMonth(offset) { const d = new Date(); d.setMonth(d.getMonth() + offset); return d.toISOString().slice(0, 7); }
 
-/**
- * Samlet beregning af stats (bruges både til overblik og graf)
- */
 function calculateComprehensiveStats(loans, assets, monthsOffset) {
     const targetMonth = getOffsetMonth(monthsOffset); 
     const isUser = currentTab !== 'total';
@@ -531,25 +573,20 @@ function calculateComprehensiveStats(loans, assets, monthsOffset) {
     assets.forEach(a => {
         if (isUser && a.owner !== currentTab && a.owner !== 'shared') return;
         let m = (isUser && a.owner === 'shared') ? 0.5 : 1;
-        
         let valFuture = a.value;
         const monthlyDeposit = a.monthlyDeposit || 0;
-
         if (a.type === 'investment') {
             const annualR = (a.changeValue || 0) / 100;
             const monthlyR = Math.pow(1 + annualR, 1/12) - 1;
-            
             if (monthlyR === 0) {
                 valFuture = a.value + (monthlyDeposit * monthsOffset);
                 if (monthsOffset === 0) monthlyGrowth += (monthlyDeposit * m);
             } else {
                 valFuture = a.value * Math.pow(1 + monthlyR, monthsOffset) + monthlyDeposit * ((Math.pow(1 + monthlyR, monthsOffset) - 1) / monthlyR);
-                // Vækst er både renten og indskuddet
                 monthlyGrowth += ((valFuture * monthlyR) + monthlyDeposit) * m;
             }
         } else {
-            valFuture = Math.max(0, a.value - (monthsOffset * (a.changeValue || 0)));
-            valFuture += (monthlyDeposit * monthsOffset);
+            valFuture = Math.max(0, a.value - (monthsOffset * (a.changeValue || 0))) + (monthlyDeposit * monthsOffset);
             monthlyLoss += (a.changeValue || 0) * m;
             monthlyGrowth += (monthlyDeposit * m);
         }
