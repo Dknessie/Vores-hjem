@@ -19,7 +19,7 @@ const budgetCategories = {
 };
 
 /**
- * Hovedfunktion til at rendre Formue & Gæld visningen
+ * Hovedfunktion til at rendre Formue & Gæld visningen i Canvas
  */
 export async function renderAssets(container) {
     const realLoans = await getLoans();
@@ -121,7 +121,7 @@ export async function renderAssets(container) {
             <div class="modal-card">
                 <h2 id="asset-modal-title">Nyt Aktiv</h2>
                 <form id="asset-form">
-                    <div class="input-group"><label>Navn</label><input type="text" id="asset-name" required placeholder="f.eks. Peugeot 208"></div>
+                    <div class="input-group"><label>Navn</label><input type="text" id="asset-name" required placeholder="f.eks. Hus eller Peugeot 208"></div>
                     <div class="input-row">
                         <div class="input-group"><label>Type</label>
                             <select id="asset-type">
@@ -136,10 +136,9 @@ export async function renderAssets(container) {
                         <div class="input-group"><label>Årlig vækst (%) / Afskrivning (kr./md)</label><input type="number" id="asset-change-val" step="0.1" value="0"></div>
                     </div>
                     <div class="input-row">
-                        <div class="input-group"><label>Tilknyt lån (til friværdi)</label>
-                            <select id="asset-linked-loan">
-                                <option value="">-- Intet lån --</option>
-                                ${realLoans.map(l => `<option value="${l.id}">${l.name} (${l.owner})</option>`).join('')}
+                        <div class="input-group"><label>Tilknyt lån (hold Ctrl nede for flere)</label>
+                            <select id="asset-linked-loans" multiple style="height: 100px;">
+                                ${realLoans.map(l => `<option value="${l.id}">${l.name}</option>`).join('')}
                             </select>
                         </div>
                         <div class="input-group"><label>Ejer</label>
@@ -304,6 +303,9 @@ function drawProjectionGraph(loans, assets) {
     ctx.setLineDash([]);
 }
 
+/**
+ * Rendrer aktiv-kortene uden ejer-labels og med understøttelse af flere lån
+ */
 function renderAssetCards(assets, loans) {
     return assets
         .filter(a => currentTab === 'total' || a.owner === currentTab || a.owner === 'shared')
@@ -324,17 +326,22 @@ function renderAssetCards(assets, loans) {
                 valFuture = Math.max(0, asset.value - (months * (asset.changeValue || 0))) + (monthlyDeposit * months);
             }
 
-            // Beregn Friværdi (modregning af lån)
-            let linkedLoanText = "";
+            // Beregn Friværdi (modregning af samlede lån)
+            let linkedLoansSummary = "";
             let equityValue = valFuture;
-            if (asset.linkedLoanId) {
-                const loan = loans.find(l => l.id === asset.linkedLoanId);
-                if (loan) {
-                    const lCalc = calculateLoanForMonth(loan, getOffsetMonth(months));
-                    const debtNow = lCalc ? lCalc.remainingBalance : 0;
-                    equityValue = valFuture - debtNow;
-                    linkedLoanText = `<div class="equity-tag">Friværdi: <strong>${Math.round(equityValue * multiplier).toLocaleString()} kr.</strong></div>`;
-                }
+            const linkedIds = asset.linkedLoanIds || (asset.linkedLoanId ? [asset.linkedLoanId] : []);
+            
+            if (linkedIds.length > 0) {
+                let totalDebtNow = 0;
+                linkedIds.forEach(id => {
+                    const loan = loans.find(l => l.id === id);
+                    if (loan) {
+                        const lCalc = calculateLoanForMonth(loan, getOffsetMonth(months));
+                        totalDebtNow += lCalc ? lCalc.remainingBalance : 0;
+                    }
+                });
+                equityValue = valFuture - totalDebtNow;
+                linkedLoansSummary = `<div class="equity-tag">Friværdi: <strong>${Math.round(equityValue * multiplier).toLocaleString()} kr.</strong></div>`;
             }
 
             return `
@@ -344,8 +351,7 @@ function renderAssetCards(assets, loans) {
                             <div class="item-type-icon">${asset.type === 'investment' ? '📈' : '🏠'}</div>
                             <div>
                                 <h4>${asset.name}</h4>
-                                <small>${asset.owner === 'shared' ? 'Fælles' : (asset.owner === 'user1' ? 'Mig' : 'Kæreste')}</small>
-                                ${linkedLoanText}
+                                ${linkedLoansSummary}
                             </div>
                         </div>
                         <div class="item-value">
@@ -365,6 +371,9 @@ function renderAssetCards(assets, loans) {
         }).join('') || '<p class="empty-msg">Ingen aktiver registreret.</p>';
 }
 
+/**
+ * Rendrer låne-kortene uden ejer-labels
+ */
 function renderLoanCards(loans) {
     return loans
         .filter(l => currentTab === 'total' || l.owner === currentTab || l.owner === 'shared')
@@ -500,7 +509,12 @@ function setupEvents(container, realLoans, assets) {
             document.getElementById('asset-value').value = item.value;
             document.getElementById('asset-deposit').value = item.monthlyDeposit || 0;
             document.getElementById('asset-change-val').value = item.changeValue;
-            document.getElementById('asset-linked-loan').value = item.linkedLoanId || "";
+            
+            // Håndter multiple udvælgelse ved redigering
+            const select = document.getElementById('asset-linked-loans');
+            const selectedIds = item.linkedLoanIds || (item.linkedLoanId ? [item.linkedLoanId] : []);
+            Array.from(select.options).forEach(opt => opt.selected = selectedIds.includes(opt.value));
+            
             document.getElementById('asset-owner').value = item.owner;
             document.getElementById('delete-asset-btn').style.display = "block";
             document.getElementById('asset-modal').style.display = 'flex';
@@ -521,13 +535,16 @@ function setupEvents(container, realLoans, assets) {
 
     document.getElementById('asset-form').onsubmit = async (e) => {
         e.preventDefault();
+        const select = document.getElementById('asset-linked-loans');
+        const selectedIds = Array.from(select.selectedOptions).map(opt => opt.value);
+        
         const d = { 
             name: document.getElementById('asset-name').value, 
             type: document.getElementById('asset-type').value, 
             value: parseFloat(document.getElementById('asset-value').value), 
             monthlyDeposit: parseFloat(document.getElementById('asset-deposit').value) || 0,
             changeValue: parseFloat(document.getElementById('asset-change-val').value), 
-            linkedLoanId: document.getElementById('asset-linked-loan').value,
+            linkedLoanIds: selectedIds,
             owner: document.getElementById('asset-owner').value 
         };
         if (editingItemId) await updateAsset(editingItemId, d); else await addAsset(d);
