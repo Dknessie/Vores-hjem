@@ -1,4 +1,4 @@
-import { addLoan, getLoans, deleteLoan, updateLoan, getLoanEndDate, calculateLoanForMonth, addAsset, getAssets, deleteAsset, updateAsset } from "../services/loanService.js";
+import { addLoan, getLoans, deleteLoan, updateLoan, getLoanEndDate, calculateLoanForMonth, addAsset, getAssets, deleteAsset, updateAsset, getTimeUntilDebtFree } from "../services/loanService.js";
 
 // State for denne visning
 let simulationState = { 
@@ -163,7 +163,7 @@ export async function renderAssets(container) {
                 <form id="loan-form">
                     <div class="input-group"><label>Navn på lån</label><input type="text" id="loan-name" required></div>
                     <div class="input-row">
-                        <div class="input-group"><label>Restgæld nu (kr.)</label><input type="number" id="loan-principal" required></div>
+                        <div class="input-group"><label>Startgæld / Oprindeligt beløb (kr.)</label><input type="number" id="loan-principal" required></div>
                         <div class="input-group"><label>Rente (% p.a.)</label><input type="number" id="loan-interest" step="0.01" required></div>
                     </div>
                     <div class="input-row">
@@ -304,7 +304,7 @@ function drawProjectionGraph(loans, assets) {
 }
 
 /**
- * Rendrer aktiv-kortene uden ejer-labels og med understøttelse af flere lån
+ * Rendrer aktiv-kortene
  */
 function renderAssetCards(assets, loans) {
     return assets
@@ -314,7 +314,6 @@ function renderAssetCards(assets, loans) {
             const isUser = currentTab !== 'total';
             const multiplier = (isUser && asset.owner === 'shared') ? 0.5 : 1;
             
-            // Fremtidig værdi af aktivet
             let valFuture = asset.value;
             const monthlyDeposit = asset.monthlyDeposit || 0;
             if (asset.type === 'investment') {
@@ -326,7 +325,6 @@ function renderAssetCards(assets, loans) {
                 valFuture = Math.max(0, asset.value - (months * (asset.changeValue || 0))) + (monthlyDeposit * months);
             }
 
-            // Beregn Friværdi (modregning af samlede lån)
             let linkedLoansSummary = "";
             let equityValue = valFuture;
             const linkedIds = asset.linkedLoanIds || (asset.linkedLoanId ? [asset.linkedLoanId] : []);
@@ -372,7 +370,7 @@ function renderAssetCards(assets, loans) {
 }
 
 /**
- * Rendrer låne-kortene uden ejer-labels
+ * Rendrer låne-kortene med ny progress-bar status og "målstreg"
  */
 function renderLoanCards(loans) {
     return loans
@@ -382,9 +380,20 @@ function renderLoanCards(loans) {
             let m = (isUser && loan.owner === 'shared') ? 0.5 : 1;
             const currentPay = simulationState.customPayment[loan.id] || loan.monthlyPayment;
             const simLoan = { ...loan, monthlyPayment: currentPay };
-            const c = calculateLoanForMonth(simLoan, getOffsetMonth(simulationState.monthsOffset));
+            
+            // Nu-status
+            const nowStatus = calculateLoanForMonth(simLoan, getOffsetMonth(0));
+            // Simuleret status (hvis slideren er flyttet)
+            const simStatus = calculateLoanForMonth(simLoan, getOffsetMonth(simulationState.monthsOffset));
+            
             const isExpanded = simulationState.expandedLoanId === loan.id;
-            const paidPct = Math.min(100, ((loan.principal - (c ? c.remainingBalance : 0)) / loan.principal) * 100);
+            
+            // Progress beregning mod målstregen (0 kr)
+            const originalPrincipal = loan.principal;
+            const paidNow = originalPrincipal - nowStatus.remainingBalance;
+            const paidPct = Math.min(100, (paidNow / originalPrincipal) * 100);
+            
+            const timeRemaining = getTimeUntilDebtFree(simLoan);
             const endDate = getLoanEndDate(simLoan);
 
             return `
@@ -394,14 +403,27 @@ function renderLoanCards(loans) {
                             <div class="item-type-icon">🏦</div>
                             <div>
                                 <h4>${loan.name}</h4>
-                                <small>Restgæld: ${Math.round(c ? c.remainingBalance * m : 0).toLocaleString()} kr.</small>
+                                <small>Nuværende restgæld: ${Math.round(simStatus ? simStatus.remainingBalance * m : 0).toLocaleString()} kr.</small>
                             </div>
                         </div>
                         <div class="item-value">
                             <div class="val">${Math.round(currentPay * m).toLocaleString()} kr./md.</div>
-                            <div class="progress-container"><div class="progress-fill" style="width: ${paidPct}%"></div></div>
+                            <div class="time-left-hint">Gældsfri om: <strong>${timeRemaining}</strong></div>
                         </div>
                     </div>
+                    
+                    <!-- PROGRESS OVERVIEW -->
+                    <div class="loan-progress-container">
+                        <div class="progress-labels">
+                            <span>Start: ${Math.round(originalPrincipal * m).toLocaleString()} kr.</span>
+                            <span class="paid-label">Afdraget: ${Math.round(paidNow * m).toLocaleString()} kr. (${Math.round(paidPct)}%)</span>
+                            <span>Mål: 0 kr.</span>
+                        </div>
+                        <div class="loan-progress-bar-bg">
+                            <div class="loan-progress-fill" style="width: ${paidPct}%"></div>
+                        </div>
+                    </div>
+
                     ${isExpanded ? `
                         <div class="loan-simulator-inline">
                             <div class="sim-content">
@@ -510,7 +532,6 @@ function setupEvents(container, realLoans, assets) {
             document.getElementById('asset-deposit').value = item.monthlyDeposit || 0;
             document.getElementById('asset-change-val').value = item.changeValue;
             
-            // Håndter multiple udvælgelse ved redigering
             const select = document.getElementById('asset-linked-loans');
             const selectedIds = item.linkedLoanIds || (item.linkedLoanId ? [item.linkedLoanId] : []);
             Array.from(select.options).forEach(opt => opt.selected = selectedIds.includes(opt.value));
