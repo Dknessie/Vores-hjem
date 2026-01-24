@@ -227,15 +227,6 @@ button {
     margin-bottom: 3rem;
 }
 
-.stat-card {
-    background: white;
-    padding: 1.8rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    text-align: center;
-    border-bottom: 4px solid transparent;
-}
-
 .stat-card label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-light); font-weight: 800; margin-bottom: 0.5rem; }
 .stat-card div { font-size: 1.6rem; font-weight: 900; color: var(--wood-brown); }
 
@@ -430,6 +421,18 @@ button {
 .item-value { text-align: right; }
 .item-value .val { font-size: 1.2rem; font-weight: 900; }
 
+/* Status til gældsfrihed */
+.time-left-hint {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-top: 5px;
+    display: block;
+}
+.time-left-hint strong {
+    color: var(--success-green);
+    font-weight: 800;
+}
+
 .dep-hint { 
     color: var(--text-light); 
     font-size: 0.7rem; 
@@ -439,6 +442,42 @@ button {
 
 .change.up { color: var(--success-green); }
 .change.down { color: var(--danger-bright); }
+
+/* --- LOAN PROGRESS BARS (MÅLSTREG) --- */
+.loan-progress-container {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    margin-top: -0.5rem;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-light);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.paid-label {
+    color: var(--success-green);
+}
+
+.loan-progress-bar-bg {
+    height: 8px;
+    background: #f0efe6;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.loan-progress-fill {
+    height: 100%;
+    background: var(--success-green);
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 10px;
+}
 
 .item-actions { background: #f9f8f5; padding: 0.8rem 1.5rem; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #f2f1eb; }
 
@@ -508,6 +547,7 @@ select[multiple] option:checked {
     .sticky-command-center { top: 125px; }
     .section-bar-modern { flex-direction: column; align-items: flex-start; gap: 1rem; }
     .graph-legend { gap: 10px; flex-wrap: wrap; }
+    .progress-labels { flex-direction: column; gap: 2px; text-align: center; }
 }
 
 @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
