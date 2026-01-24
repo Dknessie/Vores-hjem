@@ -50,7 +50,7 @@ export async function deleteAsset(id) {
 }
 
 /**
- * AVANCERET MATEMATIK TIL SIMULERING
+ * AVANCERET MATEMATIK TIL SIMULERING OG STATUS
  */
 
 export function calculateLoanForMonth(loan, targetMonthStr) {
@@ -91,4 +91,28 @@ export function getLoanEndDate(loan) {
         safety++;
     }
     return date.toISOString().slice(0, 7);
+}
+
+/**
+ * Beregner menneskelig læsbar tid tilbage til gældsfrihed
+ */
+export function getTimeUntilDebtFree(loan) {
+    const endDateStr = getLoanEndDate(loan);
+    if (endDateStr === "Aldrig") return "Uendelig";
+    
+    const now = new Date();
+    const end = new Date(endDateStr + "-01");
+    
+    if (end <= now) return "Betalt";
+    
+    const totalMonths = (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth());
+    const years = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+    
+    let result = "";
+    if (years > 0) result += `${years} år `;
+    if (months > 0) result += `${months} mdr.`;
+    if (result === "") result = "Under 1 md.";
+    
+    return result;
 }
