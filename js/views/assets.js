@@ -359,7 +359,7 @@ function renderAssetCards(assets, loans) {
 }
 
 /**
- * Rendrer låne-kortene med levende progress-bar koblet til simulationen
+ * Rendrer låne-kortene med levende progress-bar og resttid koblet til simulationen
  */
 function renderLoanCards(loans) {
     return loans
@@ -371,18 +371,18 @@ function renderLoanCards(loans) {
             const simLoan = { ...loan, monthlyPayment: currentPay };
             
             // Simuleret status baseret på slideren
-            const simStatus = calculateLoanForMonth(simLoan, getOffsetMonth(simulationState.monthsOffset));
+            const simMonthStr = getOffsetMonth(simulationState.monthsOffset);
+            const simStatus = calculateLoanForMonth(simLoan, simMonthStr);
             
             const isExpanded = simulationState.expandedLoanId === loan.id;
             
-            // Progress beregning: Vi sammenligner simulationens restgæld med den oprindelige startgæld
+            // Progress beregning
             const originalPrincipal = loan.principal;
             const simPaidAmount = Math.max(0, originalPrincipal - simStatus.remainingBalance);
             const simPaidPct = Math.min(100, (simPaidAmount / originalPrincipal) * 100);
             
-            // Tid tilbage beregnes altid fra simulationens udgangspunkt hvis muligt, 
-            // men her holder vi den menneskelige tekst til den reelle gældsfri-dato fra i dag.
-            const timeRemaining = getTimeUntilDebtFree(simLoan);
+            // NYHED: Vi sender den simulerede måned med ind for at få resttid fra det tidspunkt
+            const timeRemaining = getTimeUntilDebtFree(simLoan, simMonthStr);
             const endDate = getLoanEndDate(simLoan);
 
             return `
@@ -401,7 +401,7 @@ function renderLoanCards(loans) {
                         </div>
                     </div>
                     
-                    <!-- PROGRESS OVERVIEW (LEVENDER BARE) -->
+                    <!-- PROGRESS OVERVIEW -->
                     <div class="loan-progress-container">
                         <div class="progress-labels">
                             <span>Start: ${Math.round(originalPrincipal * m).toLocaleString()} kr.</span>
@@ -446,7 +446,6 @@ function renderLoanCards(loans) {
 function setupEvents(container, realLoans, assets) {
     document.getElementById('global-time-slider')?.addEventListener('input', (e) => {
         simulationState.monthsOffset = parseInt(e.target.value);
-        // Da slideren nu også påvirker barerne, renderer vi hele visningen igen for at opdatere barerne
         renderAssets(container);
     });
 
