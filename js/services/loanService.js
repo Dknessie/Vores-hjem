@@ -95,14 +95,18 @@ export function getLoanEndDate(loan) {
 
 /**
  * Beregner menneskelig læsbar tid tilbage til gældsfrihed
+ * @param {Object} loan - Låneobjektet
+ * @param {String} relativeToMonthStr - Valgfri måned (YYYY-MM) som beregningen skal tage udgangspunkt i
  */
-export function getTimeUntilDebtFree(loan) {
+export function getTimeUntilDebtFree(loan, relativeToMonthStr = null) {
     const endDateStr = getLoanEndDate(loan);
     if (endDateStr === "Aldrig") return "Uendelig";
     
-    const now = new Date();
+    // Brug den simulerede måned hvis den findes, ellers dags dato
+    const now = relativeToMonthStr ? new Date(relativeToMonthStr + "-01") : new Date();
     const end = new Date(endDateStr + "-01");
     
+    // Hvis vi er nået til eller forbi slutdatoen i simulationen
     if (end <= now) return "Betalt";
     
     const totalMonths = (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth());
