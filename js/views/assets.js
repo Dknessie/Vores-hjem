@@ -201,7 +201,7 @@ export async function renderAssets(container) {
 }
 
 /**
- * Tegner prognose-grafen på canvas med beløb ved milepæle
+ * Tegner prognose-grafen
  */
 function drawProjectionGraph(loans, assets) {
     const canvas = document.getElementById('projection-graph');
@@ -244,7 +244,6 @@ function drawProjectionGraph(loans, assets) {
     }
     ctx.setLineDash([]);
 
-    // Tegn linjer
     const drawLine = (points, color, width = 3) => {
         ctx.beginPath();
         ctx.strokeStyle = color;
@@ -261,16 +260,11 @@ function drawProjectionGraph(loans, assets) {
     drawLine(data.debt, '#e53e3e');
     drawLine(data.net, '#4a667a', 5);
 
-    // --- MILEPÆLE ---
-    const milestones = [12, 36, 60, 120]; // 1, 3, 5, 10 år
+    const milestones = [12, 36, 60, 120]; 
     milestones.forEach(m => {
         const x = getX(m);
-        
-        // Datapunkter for Nettoformue
         const v = data.net[m];
         const y = getY(v);
-
-        // Tegn prik
         ctx.fillStyle = '#4a667a';
         ctx.beginPath();
         ctx.arc(x, y, 6, 0, Math.PI * 2);
@@ -278,21 +272,16 @@ function drawProjectionGraph(loans, assets) {
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 2;
         ctx.stroke();
-
-        // Tegn tekst label
         ctx.fillStyle = '#2e2e2e';
         ctx.font = 'bold 10px Segoe UI';
         ctx.textAlign = 'center';
         const labelText = Math.round(v/1000) + 'k';
         ctx.fillText(labelText, x, y - 12);
-        
-        // Tids label på X-aksen
         ctx.fillStyle = '#767676';
         ctx.font = '9px Segoe UI';
         ctx.fillText((m/12) + ' år', x, padding + chartH + 15);
     });
 
-    // Simulerings-linje
     const simX = getX(simulationState.monthsOffset);
     ctx.strokeStyle = 'rgba(93, 74, 68, 0.4)';
     ctx.setLineDash([3, 3]);
@@ -370,7 +359,7 @@ function renderAssetCards(assets, loans) {
 }
 
 /**
- * Rendrer låne-kortene med ny progress-bar status og "målstreg"
+ * Rendrer låne-kortene med levende progress-bar koblet til simulationen
  */
 function renderLoanCards(loans) {
     return loans
@@ -381,18 +370,18 @@ function renderLoanCards(loans) {
             const currentPay = simulationState.customPayment[loan.id] || loan.monthlyPayment;
             const simLoan = { ...loan, monthlyPayment: currentPay };
             
-            // Nu-status
-            const nowStatus = calculateLoanForMonth(simLoan, getOffsetMonth(0));
-            // Simuleret status (hvis slideren er flyttet)
+            // Simuleret status baseret på slideren
             const simStatus = calculateLoanForMonth(simLoan, getOffsetMonth(simulationState.monthsOffset));
             
             const isExpanded = simulationState.expandedLoanId === loan.id;
             
-            // Progress beregning mod målstregen (0 kr)
+            // Progress beregning: Vi sammenligner simulationens restgæld med den oprindelige startgæld
             const originalPrincipal = loan.principal;
-            const paidNow = originalPrincipal - nowStatus.remainingBalance;
-            const paidPct = Math.min(100, (paidNow / originalPrincipal) * 100);
+            const simPaidAmount = Math.max(0, originalPrincipal - simStatus.remainingBalance);
+            const simPaidPct = Math.min(100, (simPaidAmount / originalPrincipal) * 100);
             
+            // Tid tilbage beregnes altid fra simulationens udgangspunkt hvis muligt, 
+            // men her holder vi den menneskelige tekst til den reelle gældsfri-dato fra i dag.
             const timeRemaining = getTimeUntilDebtFree(simLoan);
             const endDate = getLoanEndDate(simLoan);
 
@@ -403,7 +392,7 @@ function renderLoanCards(loans) {
                             <div class="item-type-icon">🏦</div>
                             <div>
                                 <h4>${loan.name}</h4>
-                                <small>Nuværende restgæld: ${Math.round(simStatus ? simStatus.remainingBalance * m : 0).toLocaleString()} kr.</small>
+                                <small>Simuleret restgæld: ${Math.round(simStatus ? simStatus.remainingBalance * m : 0).toLocaleString()} kr.</small>
                             </div>
                         </div>
                         <div class="item-value">
@@ -412,15 +401,15 @@ function renderLoanCards(loans) {
                         </div>
                     </div>
                     
-                    <!-- PROGRESS OVERVIEW -->
+                    <!-- PROGRESS OVERVIEW (LEVENDER BARE) -->
                     <div class="loan-progress-container">
                         <div class="progress-labels">
                             <span>Start: ${Math.round(originalPrincipal * m).toLocaleString()} kr.</span>
-                            <span class="paid-label">Afdraget: ${Math.round(paidNow * m).toLocaleString()} kr. (${Math.round(paidPct)}%)</span>
+                            <span class="paid-label">Afdraget (sim.): ${Math.round(simPaidAmount * m).toLocaleString()} kr. (${Math.round(simPaidPct)}%)</span>
                             <span>Mål: 0 kr.</span>
                         </div>
                         <div class="loan-progress-bar-bg">
-                            <div class="loan-progress-fill" style="width: ${paidPct}%"></div>
+                            <div class="loan-progress-fill" style="width: ${simPaidPct}%"></div>
                         </div>
                     </div>
 
@@ -457,6 +446,7 @@ function renderLoanCards(loans) {
 function setupEvents(container, realLoans, assets) {
     document.getElementById('global-time-slider')?.addEventListener('input', (e) => {
         simulationState.monthsOffset = parseInt(e.target.value);
+        // Da slideren nu også påvirker barerne, renderer vi hele visningen igen for at opdatere barerne
         renderAssets(container);
     });
 
