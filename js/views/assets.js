@@ -1,17 +1,16 @@
-import { addLoan, getLoans, deleteLoan, updateLoan, getLoanEndDate, calculateLoanForMonth, addAsset, getAssets, deleteAsset, updateAsset, getTimeUntilDebtFree, addImprovement, getImprovements, deleteImprovement } from "../services/loanService.js";
+import { addLoan, getLoans, deleteLoan, updateLoan, getLoanEndDate, calculateLoanForMonth, addAsset, getAssets, deleteAsset, updateAsset, getTimeUntilDebtFree } from "../services/loanService.js";
 
-// Lokal state til simulation og visning
+// State for denne visning
 let simulationState = { 
     monthsOffset: 0, 
     customPayment: {}, 
-    expandedLoanId: null,
-    expandedAssetId: null 
+    expandedLoanId: null 
 };
 
 let currentTab = 'total';
 let editingItemId = null;
-let currentAssetForImprovement = null;
 
+// Standard kategorier fra budgettet til brug i lån
 const budgetCategories = {
     faste: "Faste udgifter",
     transport: "Transport",
@@ -20,14 +19,13 @@ const budgetCategories = {
 };
 
 /**
- * Hovedfunktion til at rendre Formue & Gæld visningen
+ * Hovedfunktion til at rendre Formue & Gæld visningen i Canvas
  */
 export async function renderAssets(container) {
     const realLoans = await getLoans();
     const assets = await getAssets();
-    const improvements = await getImprovements();
     
-    const stats = calculateComprehensiveStats(realLoans, assets, improvements, simulationState.monthsOffset);
+    const stats = calculateComprehensiveStats(realLoans, assets, simulationState.monthsOffset);
 
     container.innerHTML = `
         <header class="view-header">
@@ -41,7 +39,7 @@ export async function renderAssets(container) {
             </div>
         </header>
 
-        <!-- SIMULATIONS CENTER -->
+        <!-- STICKY COMMAND CENTER -->
         <section class="sticky-command-center">
             <div class="command-grid">
                 <div class="command-stat main-stat">
@@ -79,7 +77,8 @@ export async function renderAssets(container) {
             <button class="tab-btn ${currentTab === 'user2' ? 'active' : ''}" data-tab="user2">Kæresten</button>
         </div>
 
-        <section class="graph-section card">
+        <!-- GRAF SEKTION -->
+        <section class="graph-section card" style="margin-bottom: 2.5rem; padding: 2rem;">
             <div class="section-bar-modern">
                 <h3>Formue-prognose (10 år)</h3>
                 <div class="graph-legend">
@@ -94,18 +93,18 @@ export async function renderAssets(container) {
         </section>
 
         <div class="dual-column-grid">
-            <!-- VENSTRE: AKTIVER MED INVESTERINGS-LOG -->
+            <!-- VENSTRE: AKTIVER -->
             <section class="asset-column">
                 <div class="column-header">
                     <h3>Aktiver & Opsparing</h3>
                     <span class="total-badge">${Math.round(stats.totalAssets).toLocaleString()} kr.</span>
                 </div>
                 <div class="assets-list">
-                    ${renderAssetCards(assets, realLoans, improvements)}
+                    ${renderAssetCards(assets, realLoans)}
                 </div>
             </section>
 
-            <!-- HØJRE: GÆLD MED LEVENDE BARER -->
+            <!-- HØJRE: GÆLD -->
             <section class="debt-column">
                 <div class="column-header">
                     <h3>Gæld & Lån</h3>
@@ -115,27 +114,6 @@ export async function renderAssets(container) {
                     ${renderLoanCards(realLoans)}
                 </div>
             </section>
-        </div>
-
-        <!-- MODAL FOR FORBEDRINGER / BOLIGINVESTERINGER -->
-        <div id="improvement-modal" class="modal-overlay" style="display:none;">
-            <div class="modal-card">
-                <h2>Ny investering i hjemmet</h2>
-                <p class="subtitle" id="improvement-asset-name"></p>
-                <form id="improvement-form">
-                    <div class="input-group"><label>Titel på forbedring</label><input type="text" id="imp-title" required placeholder="f.eks. Ny trappe eller Solceller"></div>
-                    <div class="input-row">
-                        <div class="input-group"><label>Beløb (kr.)</label><input type="number" id="imp-amount" required></div>
-                        <div class="input-group"><label>Dato</label><input type="date" id="imp-date" required></div>
-                    </div>
-                    <div class="modal-buttons">
-                        <div class="main-modal-actions">
-                            <button type="button" id="close-imp-modal" class="btn-outline">Annuller</button>
-                            <button type="submit" class="btn-submit">Gem investering</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
         </div>
 
         <!-- MODAL FOR AKTIVER -->
@@ -151,7 +129,7 @@ export async function renderAssets(container) {
                                 <option value="investment">Investering / Opsparing</option>
                             </select>
                         </div>
-                        <div class="input-group"><label>Basis-værdi nu (kr.)</label><input type="number" id="asset-value" required></div>
+                        <div class="input-group"><label>Værdi nu (kr.)</label><input type="number" id="asset-value" required></div>
                     </div>
                     <div class="input-row">
                         <div class="input-group"><label>Månedligt indskud (kr.)</label><input type="number" id="asset-deposit" value="0"></div>
@@ -218,14 +196,14 @@ export async function renderAssets(container) {
         </div>
     `;
 
-    setupEvents(container, realLoans, assets, improvements);
-    drawProjectionGraph(realLoans, assets, improvements);
+    setupEvents(container, realLoans, assets);
+    drawProjectionGraph(realLoans, assets);
 }
 
 /**
- * Tegner prognose-grafen med 10 års horisont
+ * Tegner prognose-grafen
  */
-function drawProjectionGraph(loans, assets, improvements) {
+function drawProjectionGraph(loans, assets) {
     const canvas = document.getElementById('projection-graph');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -233,11 +211,11 @@ function drawProjectionGraph(loans, assets, improvements) {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
 
-    const months = 120;
+    const months = 120; // 10 år
     const data = { assets: [], debt: [], net: [] };
     
     for (let i = 0; i <= months; i++) {
-        const stats = calculateComprehensiveStats(loans, assets, improvements, i);
+        const stats = calculateComprehensiveStats(loans, assets, i);
         data.assets.push(stats.totalAssets);
         data.debt.push(stats.totalDebt);
         data.net.push(stats.netWorth);
@@ -252,18 +230,29 @@ function drawProjectionGraph(loans, assets, improvements) {
     const getY = (v) => padding + chartH - (v / maxVal) * chartH;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Grid linjer
     ctx.strokeStyle = '#e2e1d8';
     ctx.lineWidth = 1;
     ctx.setLineDash([5, 5]);
     for (let i = 0; i <= 4; i++) {
         const y = padding + (i / 4) * chartH;
-        ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(padding + chartW, y); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(padding + chartW, y);
+        ctx.stroke();
     }
     ctx.setLineDash([]);
 
     const drawLine = (points, color, width = 3) => {
-        ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = 'round';
-        points.forEach((v, m) => { if (m === 0) ctx.moveTo(getX(m), getY(v)); else ctx.lineTo(getX(m), getY(v)); });
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.lineJoin = 'round';
+        points.forEach((v, m) => {
+            if (m === 0) ctx.moveTo(getX(m), getY(v));
+            else ctx.lineTo(getX(m), getY(v));
+        });
         ctx.stroke();
     };
 
@@ -271,17 +260,42 @@ function drawProjectionGraph(loans, assets, improvements) {
     drawLine(data.debt, '#e53e3e');
     drawLine(data.net, '#4a667a', 5);
 
+    const milestones = [12, 36, 60, 120]; 
+    milestones.forEach(m => {
+        const x = getX(m);
+        const v = data.net[m];
+        const y = getY(v);
+        ctx.fillStyle = '#4a667a';
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#2e2e2e';
+        ctx.font = 'bold 10px Segoe UI';
+        ctx.textAlign = 'center';
+        const labelText = Math.round(v/1000) + 'k';
+        ctx.fillText(labelText, x, y - 12);
+        ctx.fillStyle = '#767676';
+        ctx.font = '9px Segoe UI';
+        ctx.fillText((m/12) + ' år', x, padding + chartH + 15);
+    });
+
     const simX = getX(simulationState.monthsOffset);
     ctx.strokeStyle = 'rgba(93, 74, 68, 0.4)';
     ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(simX, padding); ctx.lineTo(simX, padding + chartH); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(simX, padding);
+    ctx.lineTo(simX, padding + chartH);
+    ctx.stroke();
     ctx.setLineDash([]);
 }
 
 /**
- * Rendrer aktiv-kortene med boligforbedringer
+ * Rendrer aktiv-kortene
  */
-function renderAssetCards(assets, loans, improvements) {
+function renderAssetCards(assets, loans) {
     return assets
         .filter(a => currentTab === 'total' || a.owner === currentTab || a.owner === 'shared')
         .map(asset => {
@@ -289,27 +303,21 @@ function renderAssetCards(assets, loans, improvements) {
             const isUser = currentTab !== 'total';
             const multiplier = (isUser && asset.owner === 'shared') ? 0.5 : 1;
             
-            // Hent investeringer for dette aktiv (f.eks. jeres nye trappe)
-            const assetImprovements = improvements.filter(imp => imp.assetId === asset.id);
-            const improvementTotal = assetImprovements.reduce((sum, imp) => sum + imp.amount, 0);
-
-            let valBaseFuture = asset.value;
+            let valFuture = asset.value;
             const monthlyDeposit = asset.monthlyDeposit || 0;
             if (asset.type === 'investment') {
                 const annualR = (asset.changeValue || 0) / 100;
                 const monthlyR = Math.pow(1 + annualR, 1/12) - 1;
-                if (monthlyR === 0) valBaseFuture = asset.value + (monthlyDeposit * months);
-                else valBaseFuture = asset.value * Math.pow(1 + monthlyR, months) + monthlyDeposit * ((Math.pow(1 + monthlyR, months) - 1) / monthlyR);
+                if (monthlyR === 0) valFuture = asset.value + (monthlyDeposit * months);
+                else valFuture = asset.value * Math.pow(1 + monthlyR, months) + monthlyDeposit * ((Math.pow(1 + monthlyR, months) - 1) / monthlyR);
             } else {
-                valBaseFuture = Math.max(0, asset.value - (months * (asset.changeValue || 0))) + (monthlyDeposit * months);
+                valFuture = Math.max(0, asset.value - (months * (asset.changeValue || 0))) + (monthlyDeposit * months);
             }
 
-            // Samlet værdi inkluderer investeringer
-            const valTotalFuture = valBaseFuture + improvementTotal;
-
             let linkedLoansSummary = "";
-            let equityValue = valTotalFuture;
+            let equityValue = valFuture;
             const linkedIds = asset.linkedLoanIds || (asset.linkedLoanId ? [asset.linkedLoanId] : []);
+            
             if (linkedIds.length > 0) {
                 let totalDebtNow = 0;
                 linkedIds.forEach(id => {
@@ -319,48 +327,28 @@ function renderAssetCards(assets, loans, improvements) {
                         totalDebtNow += lCalc ? lCalc.remainingBalance : 0;
                     }
                 });
-                equityValue = valTotalFuture - totalDebtNow;
+                equityValue = valFuture - totalDebtNow;
                 linkedLoansSummary = `<div class="equity-tag">Friværdi: <strong>${Math.round(equityValue * multiplier).toLocaleString()} kr.</strong></div>`;
             }
 
-            const isExpanded = simulationState.expandedAssetId === asset.id;
-
             return `
-                <div class="asset-item-card ${isExpanded ? 'expanded' : ''}">
-                    <div class="item-main clickable-asset-header" data-id="${asset.id}">
+                <div class="asset-item-card">
+                    <div class="item-main">
                         <div class="item-info">
                             <div class="item-type-icon">${asset.type === 'investment' ? '📈' : '🏠'}</div>
                             <div>
                                 <h4>${asset.name}</h4>
                                 ${linkedLoansSummary}
-                                ${improvementTotal > 0 ? `<small class="imp-total-label">+${improvementTotal.toLocaleString()} kr. i forbedringer</small>` : ''}
                             </div>
                         </div>
                         <div class="item-value">
-                            <div class="val">${Math.round(valTotalFuture * multiplier).toLocaleString()} kr.</div>
+                            <div class="val">${Math.round(valFuture * multiplier).toLocaleString()} kr.</div>
                             <div class="change ${asset.type === 'investment' ? 'up' : 'down'}">
                                 ${monthlyDeposit > 0 ? `<span class="dep-hint">+${monthlyDeposit} kr./md.</span>` : ''}
                                 ${asset.type === 'investment' ? '+' + asset.changeValue + '%' : '-' + asset.changeValue + ' kr.'}
                             </div>
                         </div>
                     </div>
-                    
-                    ${isExpanded && asset.type === 'physical' ? `
-                        <div class="asset-details-inline">
-                            <h5>Investerings-log</h5>
-                            <ul class="improvement-list">
-                                ${assetImprovements.map(imp => `
-                                    <li class="imp-item">
-                                        <span>${imp.title} <small>(${new Date(imp.date).toLocaleDateString()})</small></span>
-                                        <strong>${imp.amount.toLocaleString()} kr.</strong>
-                                        <button class="btn-del-mini" data-del-imp-id="${imp.id}">✕</button>
-                                    </li>
-                                `).join('') || '<p class="empty-msg-small">Ingen forbedringer endnu.</p>'}
-                            </ul>
-                            <button class="btn-text-link add-imp-btn" data-asset-id="${asset.id}" data-asset-name="${asset.name}">+ Tilføj forbedring</button>
-                        </div>
-                    ` : ''}
-
                     <div class="item-actions">
                         <button class="btn-edit-minimal" data-edit-id="${asset.id}" data-type="asset">✎ Rediger</button>
                         <button class="btn-del-minimal" data-del-id="${asset.id}" data-type="asset">✕ Slet</button>
@@ -371,7 +359,7 @@ function renderAssetCards(assets, loans, improvements) {
 }
 
 /**
- * Rendrer låne-kortene med levende barer og simuleret resttid
+ * Rendrer låne-kortene med levende progress-bar og resttid koblet til simulationen
  */
 function renderLoanCards(loans) {
     return loans
@@ -381,14 +369,19 @@ function renderLoanCards(loans) {
             let m = (isUser && loan.owner === 'shared') ? 0.5 : 1;
             const currentPay = simulationState.customPayment[loan.id] || loan.monthlyPayment;
             const simLoan = { ...loan, monthlyPayment: currentPay };
+            
+            // Simuleret status baseret på slideren
             const simMonthStr = getOffsetMonth(simulationState.monthsOffset);
             const simStatus = calculateLoanForMonth(simLoan, simMonthStr);
+            
             const isExpanded = simulationState.expandedLoanId === loan.id;
+            
+            // Progress beregning
             const originalPrincipal = loan.principal;
             const simPaidAmount = Math.max(0, originalPrincipal - simStatus.remainingBalance);
             const simPaidPct = Math.min(100, (simPaidAmount / originalPrincipal) * 100);
             
-            // Opdateret tekst baseret på simuleret måned
+            // NYHED: Vi sender den simulerede måned med ind for at få resttid fra det tidspunkt
             const timeRemaining = getTimeUntilDebtFree(simLoan, simMonthStr);
             const endDate = getLoanEndDate(simLoan);
 
@@ -407,31 +400,39 @@ function renderLoanCards(loans) {
                             <div class="time-left-hint">Gældsfri om: <strong>${timeRemaining}</strong></div>
                         </div>
                     </div>
-                    <!-- LEVENDE MÅLSTREGS-BAR -->
+                    
+                    <!-- PROGRESS OVERVIEW -->
                     <div class="loan-progress-container">
                         <div class="progress-labels">
                             <span>Start: ${Math.round(originalPrincipal * m).toLocaleString()} kr.</span>
                             <span class="paid-label">Afdraget (sim.): ${Math.round(simPaidAmount * m).toLocaleString()} kr. (${Math.round(simPaidPct)}%)</span>
                             <span>Mål: 0 kr.</span>
                         </div>
-                        <div class="loan-progress-bar-bg"><div class="loan-progress-fill" style="width: ${simPaidPct}%"></div></div>
+                        <div class="loan-progress-bar-bg">
+                            <div class="loan-progress-fill" style="width: ${simPaidPct}%"></div>
+                        </div>
                     </div>
+
                     ${isExpanded ? `
                         <div class="loan-simulator-inline">
                             <div class="sim-content">
                                 <div class="sim-row">
                                     <div class="sim-input-group">
-                                        <label>Simuler ændret afdrag:</label>
+                                        <label>Simuler ændret afdrag (mdl. ydelse):</label>
                                         <input type="range" class="inline-rate-slider" data-id="${loan.id}" min="${Math.round(loan.monthlyPayment * 0.5)}" max="${Math.round(loan.monthlyPayment * 5)}" value="${currentPay}">
                                         <div class="slider-labels"><span>-50%</span><strong>${Math.round(currentPay).toLocaleString()} kr.</strong><span>+400%</span></div>
                                     </div>
-                                    <div class="sim-result-group"><label>Forventet gældsfri:</label><div class="end-date-val">${endDate === 'Aldrig' ? 'Uendelig' : new Date(endDate + "-01").toLocaleDateString('da-DK', {month:'long', year:'numeric'})}</div></div>
+                                    <div class="sim-result-group">
+                                        <label>Forventet gældsfri:</label>
+                                        <div class="end-date-val">${endDate === 'Aldrig' ? 'Uendelig' : new Date(endDate + "-01").toLocaleDateString('da-DK', {month:'long', year:'numeric'})}</div>
+                                    </div>
                                 </div>
                                 <div class="sim-actions-bar">
+                                    <div class="sim-info-text">Simulation påvirker kun overblikket indtil du gemmer.</div>
                                     <div class="sim-buttons">
                                         <button class="btn-danger-outline" data-del-id="${loan.id}" data-type="loan">Slet lån</button>
-                                        <button class="btn-outline" data-edit-id="${loan.id}" data-type="loan">Rediger</button>
-                                        <button class="btn-submit save-sim-btn" data-id="${loan.id}">Gem ydelse</button>
+                                        <button class="btn-outline" data-edit-id="${loan.id}" data-type="loan">Rediger detaljer</button>
+                                        <button class="btn-submit save-sim-btn" data-id="${loan.id}">Gem ny ydelse</button>
                                     </div>
                                 </div>
                             </div>
@@ -442,7 +443,7 @@ function renderLoanCards(loans) {
         }).join('') || '<p class="empty-msg">Ingen gældsposter fundet.</p>';
 }
 
-function setupEvents(container, realLoans, assets, improvements) {
+function setupEvents(container, realLoans, assets) {
     document.getElementById('global-time-slider')?.addEventListener('input', (e) => {
         simulationState.monthsOffset = parseInt(e.target.value);
         renderAssets(container);
@@ -454,9 +455,11 @@ function setupEvents(container, realLoans, assets, improvements) {
         renderAssets(container);
     });
 
-    container.querySelectorAll('.tab-btn').forEach(btn => btn.onclick = () => { currentTab = btn.dataset.tab; renderAssets(container); });
+    container.querySelectorAll('.tab-btn').forEach(btn => btn.onclick = () => {
+        currentTab = btn.dataset.tab;
+        renderAssets(container);
+    });
 
-    // Expand/Collapse lån og aktiver
     container.querySelectorAll('.clickable-loan-header').forEach(header => {
         header.onclick = () => {
             const id = header.dataset.id;
@@ -465,51 +468,29 @@ function setupEvents(container, realLoans, assets, improvements) {
         };
     });
 
-    container.querySelectorAll('.clickable-asset-header').forEach(header => {
-        header.onclick = () => {
-            const id = header.dataset.id;
-            simulationState.expandedAssetId = (simulationState.expandedAssetId === id) ? null : id;
-            renderAssets(container);
+    container.querySelectorAll('.inline-rate-slider').forEach(slider => {
+        slider.oninput = (e) => {
+            simulationState.customPayment[slider.dataset.id] = parseInt(e.target.value);
+            drawProjectionGraph(realLoans, assets); 
         };
+        slider.onchange = () => renderAssets(container); 
     });
 
-    // Investerings-events
-    container.querySelectorAll('.add-imp-btn').forEach(btn => {
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            currentAssetForImprovement = btn.dataset.assetId;
-            document.getElementById('improvement-asset-name').innerText = "Aktiv: " + btn.dataset.assetName;
-            document.getElementById('improvement-modal').style.display = 'flex';
-        };
-    });
-
-    document.getElementById('close-imp-modal').onclick = () => document.getElementById('improvement-modal').style.display = 'none';
-
-    document.getElementById('improvement-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const data = {
-            assetId: currentAssetForImprovement,
-            title: document.getElementById('imp-title').value,
-            amount: parseFloat(document.getElementById('imp-amount').value),
-            date: document.getElementById('imp-date').value
-        };
-        await addImprovement(data);
-        document.getElementById('improvement-modal').style.display = 'none';
-        document.getElementById('improvement-form').reset();
-        renderAssets(container);
-    };
-
-    container.querySelectorAll('[data-del-imp-id]').forEach(btn => {
+    container.querySelectorAll('.save-sim-btn').forEach(btn => {
         btn.onclick = async (e) => {
             e.stopPropagation();
-            if (confirm('Slet denne investering?')) {
-                await deleteImprovement(btn.dataset.delImpId);
+            const id = btn.dataset.id;
+            const newPayment = simulationState.customPayment[id];
+            if (!newPayment) return;
+            const loan = realLoans.find(l => l.id === id);
+            if (confirm(`Vil du gemme ${Math.round(newPayment).toLocaleString()} kr. som din nye faste månedlige ydelse for ${loan.name}?`)) {
+                await updateLoan(id, { ...loan, monthlyPayment: newPayment });
+                delete simulationState.customPayment[id];
                 renderAssets(container);
             }
         };
     });
 
-    // Standard CRUD events
     document.getElementById('open-asset-modal').onclick = () => { editingItemId = null; document.getElementById('asset-form').reset(); document.getElementById('delete-asset-btn').style.display = "none"; document.getElementById('asset-modal').style.display = 'flex'; };
     document.getElementById('open-loan-modal').onclick = () => { editingItemId = null; document.getElementById('loan-form').reset(); document.getElementById('delete-loan-btn-modal').style.display = "none"; document.getElementById('loan-modal').style.display = 'flex'; };
     document.getElementById('close-asset-modal').onclick = () => document.getElementById('asset-modal').style.display = 'none';
@@ -539,9 +520,11 @@ function setupEvents(container, realLoans, assets, improvements) {
             document.getElementById('asset-value').value = item.value;
             document.getElementById('asset-deposit').value = item.monthlyDeposit || 0;
             document.getElementById('asset-change-val').value = item.changeValue;
+            
             const select = document.getElementById('asset-linked-loans');
             const selectedIds = item.linkedLoanIds || (item.linkedLoanId ? [item.linkedLoanId] : []);
             Array.from(select.options).forEach(opt => opt.selected = selectedIds.includes(opt.value));
+            
             document.getElementById('asset-owner').value = item.owner;
             document.getElementById('delete-asset-btn').style.display = "block";
             document.getElementById('asset-modal').style.display = 'flex';
@@ -551,18 +534,27 @@ function setupEvents(container, realLoans, assets, improvements) {
     container.querySelectorAll('[data-del-id]').forEach(btn => btn.onclick = async (e) => {
         e.stopPropagation();
         if (confirm('Slet permanent?')) {
-            if (btn.dataset.type === 'loan') await deleteLoan(btn.dataset.delId); else await deleteAsset(btn.dataset.delId);
+            if (btn.dataset.type === 'loan') await deleteLoan(btn.dataset.delId);
+            else await deleteAsset(btn.dataset.delId);
             renderAssets(container);
         }
     });
 
+    document.getElementById('delete-asset-btn').onclick = async () => { if (editingItemId && confirm('Slet aktiv?')) { await deleteAsset(editingItemId); document.getElementById('asset-modal').style.display = 'none'; renderAssets(container); } };
+    document.getElementById('delete-loan-btn-modal').onclick = async () => { if (editingItemId && confirm('Slet lån?')) { await deleteLoan(editingItemId); document.getElementById('loan-modal').style.display = 'none'; renderAssets(container); } };
+
     document.getElementById('asset-form').onsubmit = async (e) => {
         e.preventDefault();
         const select = document.getElementById('asset-linked-loans');
+        const selectedIds = Array.from(select.selectedOptions).map(opt => opt.value);
+        
         const d = { 
-            name: document.getElementById('asset-name').value, type: document.getElementById('asset-type').value, 
-            value: parseFloat(document.getElementById('asset-value').value), monthlyDeposit: parseFloat(document.getElementById('asset-deposit').value) || 0,
-            changeValue: parseFloat(document.getElementById('asset-change-val').value), linkedLoanIds: Array.from(select.selectedOptions).map(opt => opt.value),
+            name: document.getElementById('asset-name').value, 
+            type: document.getElementById('asset-type').value, 
+            value: parseFloat(document.getElementById('asset-value').value), 
+            monthlyDeposit: parseFloat(document.getElementById('asset-deposit').value) || 0,
+            changeValue: parseFloat(document.getElementById('asset-change-val').value), 
+            linkedLoanIds: selectedIds,
             owner: document.getElementById('asset-owner').value 
         };
         if (editingItemId) await updateAsset(editingItemId, d); else await addAsset(d);
@@ -572,9 +564,13 @@ function setupEvents(container, realLoans, assets, improvements) {
     document.getElementById('loan-form').onsubmit = async (e) => {
         e.preventDefault();
         const d = { 
-            name: document.getElementById('loan-name').value, principal: parseFloat(document.getElementById('loan-principal').value), 
-            interestRate: parseFloat(document.getElementById('loan-interest').value), monthlyPayment: parseFloat(document.getElementById('loan-payment').value), 
-            category: document.getElementById('loan-category').value, startDate: document.getElementById('loan-start').value, owner: document.getElementById('loan-owner').value 
+            name: document.getElementById('loan-name').value, 
+            principal: parseFloat(document.getElementById('loan-principal').value), 
+            interestRate: parseFloat(document.getElementById('loan-interest').value), 
+            monthlyPayment: parseFloat(document.getElementById('loan-payment').value), 
+            category: document.getElementById('loan-category').value,
+            startDate: document.getElementById('loan-start').value, 
+            owner: document.getElementById('loan-owner').value 
         };
         if (editingItemId) await updateLoan(editingItemId, d); else await addLoan(d);
         document.getElementById('loan-modal').style.display = 'none'; renderAssets(container);
@@ -583,7 +579,7 @@ function setupEvents(container, realLoans, assets, improvements) {
 
 function getOffsetMonth(offset) { const d = new Date(); d.setMonth(d.getMonth() + offset); return d.toISOString().slice(0, 7); }
 
-function calculateComprehensiveStats(loans, assets, improvements, monthsOffset) {
+function calculateComprehensiveStats(loans, assets, monthsOffset) {
     const targetMonth = getOffsetMonth(monthsOffset); 
     const isUser = currentTab !== 'total';
     let totalDebt = 0, totalAssets = 0, monthlyGrowth = 0, monthlyLoss = 0;
@@ -591,34 +587,37 @@ function calculateComprehensiveStats(loans, assets, improvements, monthsOffset) 
     loans.forEach(l => {
         if (isUser && l.owner !== currentTab && l.owner !== 'shared') return;
         let m = (isUser && l.owner === 'shared') ? 0.5 : 1;
-        const c = calculateLoanForMonth({ ...l, monthlyPayment: simulationState.customPayment[l.id] || l.monthlyPayment }, targetMonth);
-        if (c) { totalDebt += c.remainingBalance * m; monthlyGrowth += c.principalPaid * m; monthlyLoss += c.interest * m; }
+        const currentPay = simulationState.customPayment[l.id] || l.monthlyPayment;
+        const simLoan = { ...l, monthlyPayment: currentPay };
+        const c = calculateLoanForMonth(simLoan, targetMonth);
+        if (c) { 
+            totalDebt += c.remainingBalance * m; 
+            monthlyGrowth += c.principalPaid * m; 
+            monthlyLoss += c.interest * m; 
+        }
     });
 
     assets.forEach(a => {
         if (isUser && a.owner !== currentTab && a.owner !== 'shared') return;
         let m = (isUser && a.owner === 'shared') ? 0.5 : 1;
-        const assetImprovements = improvements.filter(imp => imp.assetId === a.id);
-        const improvementTotal = assetImprovements.reduce((sum, imp) => sum + imp.amount, 0);
-        let valBaseFuture = a.value;
+        let valFuture = a.value;
         const monthlyDeposit = a.monthlyDeposit || 0;
         if (a.type === 'investment') {
             const annualR = (a.changeValue || 0) / 100;
             const monthlyR = Math.pow(1 + annualR, 1/12) - 1;
-            if (monthlyR === 0) valBaseFuture = a.value + (monthlyDeposit * monthsOffset);
-            else valBaseFuture = a.value * Math.pow(1 + monthlyR, monthsOffset) + monthlyDeposit * ((Math.pow(1 + monthlyR, monthsOffset) - 1) / monthlyR);
+            if (monthlyR === 0) {
+                valFuture = a.value + (monthlyDeposit * monthsOffset);
+                if (monthsOffset === 0) monthlyGrowth += (monthlyDeposit * m);
+            } else {
+                valFuture = a.value * Math.pow(1 + monthlyR, monthsOffset) + monthlyDeposit * ((Math.pow(1 + monthlyR, monthsOffset) - 1) / monthlyR);
+                monthlyGrowth += ((valFuture * monthlyR) + monthlyDeposit) * m;
+            }
         } else {
-            valBaseFuture = Math.max(0, a.value - (monthsOffset * (a.changeValue || 0))) + (monthlyDeposit * monthsOffset);
-        }
-        totalAssets += (valBaseFuture + improvementTotal) * m;
-        if (a.type === 'investment') {
-            const annualR = (a.changeValue || 0) / 100;
-            const monthlyR = Math.pow(1 + annualR, 1/12) - 1;
-            monthlyGrowth += ((valBaseFuture * (monthlyR || 0)) + monthlyDeposit) * m;
-        } else {
+            valFuture = Math.max(0, a.value - (monthsOffset * (a.changeValue || 0))) + (monthlyDeposit * monthsOffset);
             monthlyLoss += (a.changeValue || 0) * m;
             monthlyGrowth += (monthlyDeposit * m);
         }
+        totalAssets += valFuture * m;
     });
 
     return { totalDebt, totalAssets, netWorth: totalAssets - totalDebt, monthlyGrowth, monthlyLoss };
