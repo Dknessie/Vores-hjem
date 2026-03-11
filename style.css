@@ -227,7 +227,7 @@ button {
     margin-bottom: 3rem;
 }
 
-/* Stat-kort med bokse */
+/* Opdateret Stat-kort med bokse (TRIN 2) */
 .stat-card {
     background: white;
     padding: 1.8rem;
@@ -415,7 +415,6 @@ button {
     margin-bottom: 1.2rem; transition: var(--transition); overflow: hidden; border: 1px solid transparent;
 }
 .asset-item-card:hover, .loan-item-card:hover { border-color: var(--primary-green); transform: translateX(5px); }
-.asset-item-card.expanded, .loan-item-card.expanded { border: 2px solid var(--primary-green); box-shadow: 0 15px 35px rgba(0,0,0,0.1); transform: translateX(0); }
 
 .item-main { padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
 .item-type-icon {
@@ -423,64 +422,89 @@ button {
     display: flex; justify-content: center; align-items: center; border-radius: 14px;
 }
 
-/* Friværdi & Forbedrings tags */
+/* Friværdi tag */
 .equity-tag {
-    font-size: 0.75rem; color: var(--success-green); background: #eef7f2;
-    padding: 2px 8px; border-radius: 6px; display: inline-block;
-    margin-top: 4px; font-weight: 700;
-}
-.imp-total-label {
-    display: inline-block; font-size: 0.7rem; color: var(--accent-blue);
-    background: #eef2f4; padding: 2px 8px; border-radius: 6px;
-    margin-top: 4px; font-weight: 700; margin-left: 5px;
+    font-size: 0.75rem;
+    color: var(--success-green);
+    background: #eef7f2;
+    padding: 2px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-top: 4px;
+    font-weight: 700;
 }
 
 .item-value { text-align: right; }
 .item-value .val { font-size: 1.2rem; font-weight: 900; }
 
-.time-left-hint { font-size: 0.7rem; color: var(--text-light); margin-top: 5px; display: block; }
-.time-left-hint strong { color: var(--success-green); font-weight: 800; }
+/* Status til gældsfrihed */
+.time-left-hint {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-top: 5px;
+    display: block;
+}
+.time-left-hint strong {
+    color: var(--success-green);
+    font-weight: 800;
+}
 
-.dep-hint { color: var(--text-light); font-size: 0.7rem; margin-right: 5px; font-weight: 600; }
+.dep-hint { 
+    color: var(--text-light); 
+    font-size: 0.7rem; 
+    margin-right: 5px; 
+    font-weight: 600;
+}
+
 .change.up { color: var(--success-green); }
 .change.down { color: var(--danger-bright); }
 
-/* --- LOAN PROGRESS BARS (MÅLSTREG) --- */
-.loan-progress-container { padding: 0 1.5rem 1.5rem 1.5rem; margin-top: -0.5rem; }
-.progress-labels { display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: 700; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-.paid-label { color: var(--success-green); }
-.loan-progress-bar-bg { height: 8px; background: #f0efe6; border-radius: 10px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); }
-.loan-progress-fill { height: 100%; background: var(--success-green); transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 10px; }
-
-/* --- EXPANDED DETAILS (SIMULATOR & INVESTERINGS-LOG) --- */
-.loan-simulator-inline, .asset-details-inline {
-    background: #fdfdfa; padding: 2rem; border-top: 2px solid #ecebe4; animation: slideDown 0.3s ease-out;
+/* --- LOAN PROGRESS BARS (MÅLSTREG - TRIN 2) --- */
+.loan-progress-container {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    margin-top: -0.5rem;
 }
 
-/* Investerings-log specifik */
-.asset-details-inline h5 { font-size: 0.85rem; text-transform: uppercase; color: var(--wood-brown); margin-bottom: 1rem; letter-spacing: 1px; }
-.improvement-list { list-style: none; margin-bottom: 1.5rem; padding-left: 0; }
-.imp-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eae9e0; font-size: 0.9rem; }
-.imp-item:last-child { border-bottom: none; }
-.imp-item span { color: var(--text-main); font-weight: 600; }
-.imp-item small { color: var(--text-light); font-weight: 400; margin-left: 5px; }
-.imp-item strong { color: var(--wood-brown); margin-right: 15px; }
-.empty-msg-small { font-size: 0.85rem; color: var(--text-light); font-style: italic; }
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-light);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 
-/* Knapper i expanded views */
-.btn-del-mini { background: #fee2e2; color: var(--danger-bright); border-radius: 50%; width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center; font-size: 0.7rem; font-weight: bold; transition: var(--transition); }
-.btn-del-mini:hover { background: var(--danger-bright); color: white; transform: scale(1.1); }
-.add-imp-btn { font-size: 0.85rem; color: var(--primary-green); font-weight: 700; background: rgba(62, 92, 74, 0.1); padding: 8px 15px; border-radius: 8px; width: 100%; text-align: center; }
-.add-imp-btn:hover { background: rgba(62, 92, 74, 0.2); }
+.paid-label {
+    color: var(--success-green);
+}
 
-/* Simulator specifik */
+.loan-progress-bar-bg {
+    height: 8px;
+    background: #f0efe6;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.loan-progress-fill {
+    height: 100%;
+    background: var(--success-green);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); /* Blød overgang til simulation */
+    border-radius: 10px;
+}
+
+.item-actions { background: #f9f8f5; padding: 0.8rem 1.5rem; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #f2f1eb; }
+
+/* --- LOAN SIMULATOR INLINE --- */
+.loan-item-card.expanded { border: 2px solid var(--primary-green); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+.loan-simulator-inline { background: #fdfdfa; padding: 2rem; border-top: 2px solid #ecebe4; animation: slideDown 0.3s ease-out; }
 .sim-content { display: flex; flex-direction: column; gap: 1.5rem; }
 .sim-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; align-items: center; }
 .sim-input-group label, .sim-result-group label { display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--wood-brown); margin-bottom: 10px; }
 .inline-rate-slider { width: 100%; accent-color: var(--primary-green); }
 .end-date-val { font-size: 1.5rem; font-weight: 900; color: var(--primary-green); letter-spacing: -1px; }
-
-.item-actions { background: #f9f8f5; padding: 0.8rem 1.5rem; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #f2f1eb; }
 
 /* --- KNAPPER --- */
 .btn-add, .btn-submit { background: var(--primary-green); color: white; padding: 1rem 2rem; border-radius: 14px; font-weight: 800; }
@@ -507,9 +531,21 @@ button {
 }
 .input-group input:focus { border-color: var(--primary-green); outline: none; }
 
-select[multiple] { height: auto; min-height: 100px; padding: 0.5rem; }
-select[multiple] option { padding: 8px; border-radius: 8px; margin-bottom: 2px; }
-select[multiple] option:checked { background: var(--primary-green) linear-gradient(0deg, var(--primary-green) 0%, var(--primary-green) 100%); color: white; }
+/* Styling til 'multiple' select i modalen */
+select[multiple] {
+    height: auto;
+    min-height: 100px;
+    padding: 0.5rem;
+}
+select[multiple] option {
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 2px;
+}
+select[multiple] option:checked {
+    background: var(--primary-green) linear-gradient(0deg, var(--primary-green) 0%, var(--primary-green) 100%);
+    color: white;
+}
 
 /* --- RESPONSIVITET --- */
 @media (max-width: 1100px) {
