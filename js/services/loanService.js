@@ -3,6 +3,7 @@ import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "firebase
 
 const LOAN_COLL = "loans";
 const ASSET_COLL = "assets";
+const IMPROVEMENT_COLL = "improvements"; // Ny samling til boligforbedringer
 
 /**
  * LÅN OG AKTIV SERVICES
@@ -47,6 +48,26 @@ export async function getAssets() {
 export async function deleteAsset(id) {
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
     return await deleteDoc(doc(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL, id));
+}
+
+/**
+ * FORBEDRINGER / INVESTERINGER I AKTIVER
+ */
+export async function addImprovement(data) {
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    // data forventes at indeholde { assetId, title, amount, date }
+    return await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', IMPROVEMENT_COLL), data);
+}
+
+export async function getImprovements() {
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const snap = await getDocs(collection(state.db, 'artifacts', appId, 'public', 'data', IMPROVEMENT_COLL));
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+export async function deleteImprovement(id) {
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    return await deleteDoc(doc(state.db, 'artifacts', appId, 'public', 'data', IMPROVEMENT_COLL, id));
 }
 
 /**
@@ -95,8 +116,6 @@ export function getLoanEndDate(loan) {
 
 /**
  * Beregner menneskelig læsbar tid tilbage til gældsfrihed
- * @param {Object} loan - Låneobjektet
- * @param {String} relativeToMonthStr - Valgfri måned (YYYY-MM) som beregningen skal tage udgangspunkt i
  */
 export function getTimeUntilDebtFree(loan, relativeToMonthStr = null) {
     const endDateStr = getLoanEndDate(loan);
@@ -106,7 +125,6 @@ export function getTimeUntilDebtFree(loan, relativeToMonthStr = null) {
     const now = relativeToMonthStr ? new Date(relativeToMonthStr + "-01") : new Date();
     const end = new Date(endDateStr + "-01");
     
-    // Hvis vi er nået til eller forbi slutdatoen i simulationen
     if (end <= now) return "Betalt";
     
     const totalMonths = (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth());
