@@ -9,7 +9,7 @@ const ASSET_COLL = "assets";
  */
 export async function addLoan(data) {
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    // Initialiser med tomme logs hvis de ikke findes
+    // Sikr at nye lån altid har et array til engangsbetalinger
     const cleanData = { extraPayments: [], ...data };
     return await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL), cleanData);
 }
@@ -24,7 +24,7 @@ export async function getLoans() {
     const snap = await getDocs(collection(state.db, 'artifacts', appId, 'public', 'data', LOAN_COLL));
     return snap.docs.map(doc => ({ 
         id: doc.id, 
-        extraPayments: [], // Fallback
+        extraPayments: [], // Fallback hvis gamle lån ikke har feltet
         ...doc.data() 
     }));
 }
@@ -36,6 +36,7 @@ export async function deleteLoan(id) {
 
 export async function addAsset(data) {
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    // Sikr at nye aktiver altid har et array til forbedringer
     const cleanData = { improvements: [], ...data };
     return await addDoc(collection(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL), cleanData);
 }
@@ -50,7 +51,7 @@ export async function getAssets() {
     const snap = await getDocs(collection(state.db, 'artifacts', appId, 'public', 'data', ASSET_COLL));
     return snap.docs.map(doc => ({ 
         id: doc.id, 
-        improvements: [], // Fallback
+        improvements: [], // Fallback hvis gamle aktiver ikke har feltet
         ...doc.data() 
     }));
 }
@@ -72,33 +73,40 @@ export function calculateLoanForMonth(loan, targetMonthStr) {
     const monthsDiff = (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth());
     const monthlyRate = (loan.interestRate / 100) / 12;
     let balance = loan.principal;
-    let totalInterest = 0;
-    let lastMonthPrincipal = 0;
     let lastMonthInterest = 0;
+    let lastMonthPrincipal = 0;
     
     for (let i = 0; i <= monthsDiff; i++) {
-        // Tjek for engangsbeløb i denne specifikke måned
-        const currentMonthStr = new Date(start.getTime());
-        currentMonthStr.setMonth(start.getMonth() + i);
-        const yyyymm = currentMonthStr.toISOString().slice(0, 7);
+        // Find aktuel måned for at tjekke engangsbeløb
+        let d = new Date(start.getTime());
+        d.setMonth(start.getMonth() + i);
+        let yyyymm = d.toISOString().slice(0, 7);
         
+        // Træk evt. engangsbeløb foretaget denne måned fra gælden
         const extra = (loan.extraPayments || [])
             .filter(p => p.date === yyyymm)
             .reduce((sum, p) => sum + p.amount, 0);
-        
-        balance -= extra; // Træk engangsbeløb fra før renteberegning eller som ekstra afdrag
+            
+        balance = Math.max(0, balance - extra);
+
+        if (balance <= 0) {
+            if (i === monthsDiff) return { interest: 0, principalPaid: 0, remainingBalance: 0 };
+            break; // Betalt ud før tid
+        }
 
         lastMonthInterest = balance * monthlyRate;
         if (balance + lastMonthInterest <= loan.monthlyPayment) {
             lastMonthPrincipal = balance;
             balance = 0;
-            if (i < monthsDiff) return { interest: 0, principalPaid: 0, remainingBalance: 0 };
-            break;
         } else {
             lastMonthPrincipal = loan.monthlyPayment - lastMonthInterest;
             balance -= lastMonthPrincipal;
         }
-        totalInterest += lastMonthInterest;
+
+        if (balance <= 0 && i < monthsDiff) {
+            if (i === monthsDiff) break;
+            return { interest: 0, principalPaid: 0, remainingBalance: 0 };
+        }
     }
     
     return { 
@@ -113,26 +121,35 @@ export function getLoanEndDate(loan) {
     let date = new Date(loan.startDate + "-01");
     const monthlyRate = (loan.interestRate / 100) / 12;
     let safety = 0;
-
-    // Vi inkluderer også engangsbeløb i beregningen af slutdato
+    
     while (balance > 0 && safety < 600) {
         const yyyymm = date.toISOString().slice(0, 7);
+        
+        // Tjek for engangsbeløb i denne måned
         const extra = (loan.extraPayments || [])
             .filter(p => p.date === yyyymm)
             .reduce((sum, p) => sum + p.amount, 0);
-        
-        balance -= extra;
+            
+        balance = Math.max(0, balance - extra);
+        if (balance <= 0) return yyyymm; // Gældfri via engangsbeløb
 
         let int = balance * monthlyRate;
         let princ = loan.monthlyPayment - int;
-        if (princ <= 0 && balance > 0) return "Aldrig";
+        
+        if (princ <= 0 && balance > 0) return "Aldrig"; // Renten overstiger ydelsen
+        
         balance -= princ;
+        if (balance <= 0) return yyyymm; // Gældfri via ordinært afdrag
+        
         date.setMonth(date.getMonth() + 1);
         safety++;
     }
     return date.toISOString().slice(0, 7);
 }
 
+/**
+ * Beregner menneskelig læsbar tid tilbage til gældsfrihed
+ */
 export function getTimeUntilDebtFree(loan, relativeToMonthStr = null) {
     const endDateStr = getLoanEndDate(loan);
     if (endDateStr === "Aldrig") return "Uendelig";
