@@ -32,7 +32,7 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4, h5 {
     color: var(--wood-brown);
     font-weight: 700;
 }
@@ -171,6 +171,8 @@ button {
     max-width: 600px;
     box-shadow: 0 40px 100px rgba(0,0,0,0.3);
     animation: slideDown 0.3s ease-out;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .modal-buttons {
@@ -227,7 +229,6 @@ button {
     margin-bottom: 3rem;
 }
 
-/* Opdateret Stat-kort med bokse (TRIN 2) */
 .stat-card {
     background: white;
     padding: 1.8rem;
@@ -284,7 +285,6 @@ button {
 .progress-fill-budget { height: 100%; background: var(--success-green); transition: width 0.8s ease; }
 .progress-fill-budget.warning { background: var(--danger-bright); }
 
-/* --- BUDGET ITEMS & SIMULATION --- */
 .small-item {
     display: flex; justify-content: space-between; align-items: center;
     padding: 0.9rem 0.6rem;
@@ -406,6 +406,41 @@ button {
 .command-mini-stats { display: flex; flex-direction: column; gap: 8px; }
 .command-mini-stats .mini-stat { display: flex; justify-content: space-between; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2px; }
 
+/* --- MILEPÆLS KALENDER (Nye Trin 1 Funktioner) --- */
+.milestones-section {
+    margin-bottom: 2.5rem;
+}
+
+.milestone-grid {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 15px;
+    /* Custom Scrollbar for lækkert look */
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-green) #e2e1d8;
+}
+
+.milestone-grid::-webkit-scrollbar { height: 8px; }
+.milestone-grid::-webkit-scrollbar-track { background: #e2e1d8; border-radius: 10px; }
+.milestone-grid::-webkit-scrollbar-thumb { background-color: var(--primary-green); border-radius: 10px; }
+
+.milestone-card {
+    min-width: 220px;
+    background: white;
+    padding: 1.2rem 1.5rem;
+    border-radius: 16px;
+    border-left: 5px solid var(--success-green);
+    box-shadow: var(--shadow);
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.milestone-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
 /* --- ASSET & LOAN CARDS --- */
 .dual-column-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-top: 1rem; }
 .column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 10px; border-bottom: 3px solid var(--wood-brown); }
@@ -422,7 +457,6 @@ button {
     display: flex; justify-content: center; align-items: center; border-radius: 14px;
 }
 
-/* Friværdi tag */
 .equity-tag {
     font-size: 0.75rem;
     color: var(--success-green);
@@ -437,7 +471,6 @@ button {
 .item-value { text-align: right; }
 .item-value .val { font-size: 1.2rem; font-weight: 900; }
 
-/* Status til gældsfrihed */
 .time-left-hint {
     font-size: 0.7rem;
     color: var(--text-light);
@@ -459,7 +492,7 @@ button {
 .change.up { color: var(--success-green); }
 .change.down { color: var(--danger-bright); }
 
-/* --- LOAN PROGRESS BARS (MÅLSTREG - TRIN 2) --- */
+/* --- LOAN PROGRESS BARS --- */
 .loan-progress-container {
     padding: 0 1.5rem 1.5rem 1.5rem;
     margin-top: -0.5rem;
@@ -476,9 +509,7 @@ button {
     letter-spacing: 0.5px;
 }
 
-.paid-label {
-    color: var(--success-green);
-}
+.paid-label { color: var(--success-green); }
 
 .loan-progress-bar-bg {
     height: 8px;
@@ -491,15 +522,68 @@ button {
 .loan-progress-fill {
     height: 100%;
     background: var(--success-green);
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); /* Blød overgang til simulation */
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 10px;
 }
 
 .item-actions { background: #f9f8f5; padding: 0.8rem 1.5rem; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #f2f1eb; }
 
+/* --- LOG SEKTIONER (Forbedringer & Engangsafdrag) --- */
+.log-section {
+    background: #fdfdfa;
+    padding: 1.5rem;
+    border-top: 1px solid #ecebe4;
+    animation: slideDown 0.3s ease-out;
+}
+
+.log-section h5 {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+}
+
+.mini-log {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+}
+
+.mini-log li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e0ded4;
+    font-size: 0.85rem;
+}
+
+.mini-log li:last-child {
+    border-bottom: none;
+}
+
+.mini-log li span {
+    color: var(--text-main);
+}
+
+.mini-log li strong {
+    color: var(--success-green);
+    font-weight: 800;
+}
+
 /* --- LOAN SIMULATOR INLINE --- */
-.loan-item-card.expanded { border: 2px solid var(--primary-green); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
-.loan-simulator-inline { background: #fdfdfa; padding: 2rem; border-top: 2px solid #ecebe4; animation: slideDown 0.3s ease-out; }
+.loan-item-card.expanded, .asset-item-card.expanded { 
+    border: 2px solid var(--primary-green); 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+}
+
+.loan-simulator-inline { 
+    background: #fdfdfa; 
+    padding: 2rem; 
+    border-top: 2px solid #ecebe4; 
+    animation: slideDown 0.3s ease-out; 
+}
+
 .sim-content { display: flex; flex-direction: column; gap: 1.5rem; }
 .sim-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; align-items: center; }
 .sim-input-group label, .sim-result-group label { display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--wood-brown); margin-bottom: 10px; }
@@ -517,6 +601,9 @@ button {
 .btn-danger-outline { background: white; border: 2px solid var(--danger-bright); color: var(--danger-bright); padding: 0.8rem 1.8rem; border-radius: 14px; font-weight: 700; }
 .btn-danger-outline:hover { background: var(--danger-bright); color: white; }
 
+.btn-outline-small { background: transparent; border: 2px solid var(--text-light); color: var(--text-light); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; }
+.btn-outline-small:hover { background: var(--text-light); color: white; }
+
 .btn-edit-minimal, .btn-del-minimal { background: transparent; color: var(--text-light); font-weight: 700; font-size: 0.85rem; }
 .btn-edit-minimal:hover { color: var(--primary-green); }
 .btn-del-minimal:hover { color: var(--danger-bright); }
@@ -531,7 +618,6 @@ button {
 }
 .input-group input:focus { border-color: var(--primary-green); outline: none; }
 
-/* Styling til 'multiple' select i modalen */
 select[multiple] {
     height: auto;
     min-height: 100px;
